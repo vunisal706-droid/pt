@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>¡Para y Piensa! - Control Inhibitorio</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#E74C3C">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #E74C3C;
+            --primary-dark: #C0392B;
+            --secondary: #27AE60;
+            --accent: #F39C12;
+            --blue: #3498DB;
+            --bg-gradient-1: #ff7675;
+            --bg-gradient-2: #d63031;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(2rem, 7vw, 4rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark), 
+                         6px 6px 0 rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 10px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mascot {
+            font-size: clamp(60px, 15vw, 100px);
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(180deg, var(--secondary) 0%, #219a52 100%);
+            color: white;
+            box-shadow: 0 6px 0 #1e8449, var(--shadow);
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #1e8449, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            color: var(--text-dark);
+            box-shadow: 0 6px 0 #ccc, var(--shadow);
+        }
+
+        .btn-secondary:hover, .btn-secondary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #ccc, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Selección de modo */
+        .mode-selection {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 30px;
+            width: clamp(280px, 40vw, 350px);
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 4px solid transparent;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .mode-card.selected {
+            border-color: var(--secondary);
+            transform: scale(1.02);
+        }
+
+        .mode-icon {
+            font-size: clamp(3rem, 10vw, 5rem);
+            margin-bottom: 15px;
+        }
+
+        .mode-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .mode-description {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Header del juego */
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .level-indicator {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--primary-dark);
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--accent);
+        }
+
+        .lives-display {
+            display: flex;
+            gap: 5px;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+        }
+
+        .life {
+            transition: all 0.3s;
+        }
+
+        .life.lost {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+
+        /* Área de juego */
+        .game-area {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ===== MODO GO/NO-GO ===== */
+        .gonogo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .gonogo-rules {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .rule-card {
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .rule-emoji {
+            font-size: clamp(2rem, 6vw, 3rem);
+        }
+
+        .rule-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+        }
+
+        .rule-go { color: var(--secondary); }
+        .rule-nogo { color: var(--primary); }
+
+        .stimulus-area {
+            width: clamp(200px, 50vw, 350px);
+            height: clamp(200px, 50vw, 350px);
+            background: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 8px solid #e0e0e0;
+        }
+
+        .stimulus-area:active {
+            transform: scale(0.95);
+        }
+
+        .stimulus-area.correct {
+            border-color: var(--secondary);
+            animation: correctPulse 0.5s;
+        }
+
+        .stimulus-area.wrong {
+            border-color: var(--primary);
+            animation: shake 0.5s;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); background: rgba(39, 174, 96, 0.2); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-15px); }
+            40%, 80% { transform: translateX(15px); }
+        }
+
+        .stimulus {
+            font-size: clamp(5rem, 20vw, 10rem);
+            animation: stimulusAppear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes stimulusAppear {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .gonogo-instruction {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        /* Feedback visual */
+        .feedback-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 500;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .feedback-overlay.show {
+            opacity: 1;
+        }
+
+        .feedback-icon {
+            font-size: clamp(6rem, 25vw, 12rem);
+            animation: feedbackPop 0.5s forwards;
+        }
+
+        @keyframes feedbackPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        /* ===== MODO SEMÁFORO ===== */
+        .traffic-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .traffic-light {
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            padding: 25px 20px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border: 5px solid #34495e;
+        }
+
+        .traffic-light-bulb {
+            width: clamp(60px, 15vw, 100px);
+            height: clamp(60px, 15vw, 100px);
+            border-radius: 50%;
+            transition: all 0.3s;
+            opacity: 0.3;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .traffic-light-bulb.red { background: #e74c3c; }
+        .traffic-light-bulb.yellow { background: #f1c40f; }
+        .traffic-light-bulb.green { background: #2ecc71; }
+
+        .traffic-light-bulb.active {
+            opacity: 1;
+            box-shadow: 0 0 40px currentColor, inset 0 5px 15px rgba(255,255,255,0.3);
+        }
+
+        .traffic-light-bulb.red.active { box-shadow: 0 0 50px #e74c3c, inset 0 5px 15px rgba(255,255,255,0.3); }
+        .traffic-light-bulb.yellow.active { box-shadow: 0 0 50px #f1c40f, inset 0 5px 15px rgba(255,255,255,0.3); }
+        .traffic-light-bulb.green.active { box-shadow: 0 0 50px #2ecc71, inset 0 5px 15px rgba(255,255,255,0.3); }
+
+        .traffic-actions {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .traffic-btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            padding: 20px 35px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: clamp(100px, 25vw, 150px);
+        }
+
+        .traffic-btn:active {
+            transform: scale(0.95);
+        }
+
+        .traffic-btn-icon {
+            font-size: clamp(2rem, 6vw, 3rem);
+        }
+
+        .traffic-btn-walk {
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            box-shadow: 0 6px 0 #1e8449, var(--shadow);
+        }
+
+        .traffic-btn-wait {
+            background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+            color: white;
+            box-shadow: 0 6px 0 #d68910, var(--shadow);
+        }
+
+        .traffic-btn-stop {
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 6px 0 #922b21, var(--shadow);
+        }
+
+        .traffic-btn.correct {
+            animation: btnCorrect 0.5s;
+        }
+
+        .traffic-btn.wrong {
+            animation: shake 0.5s;
+        }
+
+        @keyframes btnCorrect {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .traffic-instruction {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            padding: 15px 30px;
+            border-radius: 15px;
+        }
+
+        /* Timer visual */
+        .timer-bar {
+            position: fixed;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+            transition: width 0.1s linear;
+            width: 100%;
+        }
+
+        .timer-bar-fill.warning {
+            background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+        }
+
+        /* Progress bar inferior */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 25px;
+            background: var(--card-bg);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .level-progress {
+            display: flex;
+            gap: 6px;
+        }
+
+        .level-dot {
+            width: clamp(10px, 2.5vw, 16px);
+            height: clamp(10px, 2.5vw, 16px);
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .level-dot.completed {
+            background: linear-gradient(135deg, var(--secondary) 0%, #219a52 100%);
+        }
+
+        .level-dot.current {
+            background: linear-gradient(135deg, var(--accent) 0%, #e17055 100%);
+            animation: dotPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+        }
+
+        /* Round counter */
+        .round-counter {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+            color: #666;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-emoji {
+            font-size: clamp(4rem, 15vw, 7rem);
+            margin-bottom: 15px;
+            animation: celebrateEmoji 1s ease-in-out infinite;
+        }
+
+        @keyframes celebrateEmoji {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .modal-stats {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: clamp(2rem, 7vw, 3.5rem);
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+
+        .star.earned {
+            opacity: 1;
+            animation: starPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes starPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confettiFall {
+            to {
+                top: 110vh;
+                transform: rotate(720deg);
+            }
+        }
+
+        /* Countdown inicial */
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .countdown-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .countdown-number {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(6rem, 25vw, 12rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark);
+            animation: countdownPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes countdownPop {
+            0% { transform: scale(2); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-header {
+                padding: 10px 15px;
+            }
+            
+            .game-area {
+                top: 65px;
+                bottom: 90px;
+            }
+
+            .gonogo-rules {
+                gap: 15px;
+            }
+
+            .rule-card {
+                padding: 10px 15px;
+            }
+
+            .traffic-actions {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de inicio -->
+    <div id="startScreen" class="screen">
+        <h1 class="title">¡Para y Piensa!</h1>
+        <p class="subtitle">Entrena tu control inhibitorio</p>
+        
+        <div class="mascot">🛑</div>
+        
+        <div class="mode-selection">
+            <div class="mode-card" id="modeGonogo" onclick="selectMode('gonogo')">
+                <div class="mode-icon">🎯</div>
+                <h3 class="mode-title">Go / No-Go</h3>
+                <p class="mode-description">Toca rápido cuando veas el objetivo, ¡pero no toques si aparece el intruso!</p>
+            </div>
+            
+            <div class="mode-card" id="modeTraffic" onclick="selectMode('traffic')">
+                <div class="mode-icon">🚦</div>
+                <h3 class="mode-title">Semáforo</h3>
+                <p class="mode-description">Responde según el color: verde camina, amarillo espera, rojo para</p>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="display: none;">¡COMENZAR!</button>
+    </div>
+
+    <!-- Pantalla Go/No-Go -->
+    <div id="gonogoScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="gonogoLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="gonogoScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="gonogoLife1">❤️</span>
+                <span class="life" id="gonogoLife2">❤️</span>
+                <span class="life" id="gonogoLife3">❤️</span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="gonogo-container">
+                <div class="gonogo-rules" id="gonogoRules">
+                    <div class="rule-card">
+                        <span class="rule-emoji" id="goEmoji">🦁</span>
+                        <span class="rule-text rule-go">= ¡TOCA!</span>
+                    </div>
+                    <div class="rule-card">
+                        <span class="rule-emoji" id="nogoEmoji">🐍</span>
+                        <span class="rule-text rule-nogo">= ¡NO TOQUES!</span>
+                    </div>
+                </div>
+                
+                <div class="stimulus-area" id="stimulusArea" onclick="handleGoNoGoClick()">
+                    <span class="stimulus" id="stimulus">🦁</span>
+                </div>
+                
+                <p class="gonogo-instruction" id="gonogoInstruction">¡Prepárate!</p>
+            </div>
+        </div>
+        
+        <div class="timer-bar">
+            <div class="timer-bar-fill" id="gonogoTimer"></div>
+        </div>
+        
+        <div class="bottom-bar">
+            <div class="level-progress" id="gonogoProgress"></div>
+            <div class="round-counter">Ronda <span id="gonogoRound">1</span>/<span id="gonogoTotalRounds">10</span></div>
+        </div>
+    </div>
+
+    <!-- Pantalla Semáforo -->
+    <div id="trafficScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="trafficLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="trafficScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="trafficLife1">❤️</span>
+                <span class="life" id="trafficLife2">❤️</span>
+                <span class="life" id="trafficLife3">❤️</span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="traffic-container">
+                <div class="traffic-instruction" id="trafficInstruction">
+                    🟢 Verde = Caminar | 🟡 Amarillo = Esperar | 🔴 Rojo = Parar
+                </div>
+                
+                <div class="traffic-light">
+                    <div class="traffic-light-bulb red" id="bulbRed"></div>
+                    <div class="traffic-light-bulb yellow" id="bulbYellow"></div>
+                    <div class="traffic-light-bulb green" id="bulbGreen"></div>
+                </div>
+                
+                <div class="traffic-actions">
+                    <button class="traffic-btn traffic-btn-walk" onclick="handleTrafficClick('walk')">
+                        <span class="traffic-btn-icon">🚶</span>
+                        <span>Caminar</span>
+                    </button>
+                    <button class="traffic-btn traffic-btn-wait" onclick="handleTrafficClick('wait')">
+                        <span class="traffic-btn-icon">⏳</span>
+                        <span>Esperar</span>
+                    </button>
+                    <button class="traffic-btn traffic-btn-stop" onclick="handleTrafficClick('stop')">
+                        <span class="traffic-btn-icon">🖐️</span>
+                        <span>Parar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timer-bar">
+            <div class="timer-bar-fill" id="trafficTimer"></div>
+        </div>
+        
+        <div class="bottom-bar">
+            <div class="level-progress" id="trafficProgress"></div>
+            <div class="round-counter">Ronda <span id="trafficRound">1</span>/<span id="trafficTotalRounds">10</span></div>
+        </div>
+    </div>
+
+    <!-- Pantalla final -->
+    <div id="endScreen" class="screen hidden">
+        <h1 class="title" id="endTitle">¡GENIAL!</h1>
+        <div class="mascot" id="endEmoji">🏆</div>
+        <p class="subtitle" id="endMessage">Has completado todos los niveles</p>
+        <div class="score-display" style="font-size: 3rem; margin: 20px;">
+            ⭐ <span id="finalScore">0</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
+            <button class="btn btn-secondary" onclick="goToStart()">CAMBIAR MODO</button>
+        </div>
+    </div>
+
+    <!-- Feedback overlay -->
+    <div id="feedbackOverlay" class="feedback-overlay">
+        <span id="feedbackIcon" class="feedback-icon">✅</span>
+    </div>
+
+    <!-- Countdown overlay -->
+    <div id="countdownOverlay" class="countdown-overlay">
+        <span id="countdownNumber" class="countdown-number">3</span>
+    </div>
+
+    <!-- Modal nivel completado -->
+    <div id="levelModal" class="modal-overlay">
+        <div class="modal">
+            <div id="modalEmoji" class="modal-emoji">🎉</div>
+            <h2 id="modalTitle" class="modal-title">¡Nivel Completado!</h2>
+            <div class="stars-container">
+                <span class="star" id="star1">⭐</span>
+                <span class="star" id="star2">⭐</span>
+                <span class="star" id="star3">⭐</span>
+            </div>
+            <p id="modalStats" class="modal-stats"></p>
+            <button class="btn btn-primary" onclick="nextLevel()">SIGUIENTE</button>
+        </div>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="gameOverModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-emoji">😅</div>
+            <h2 class="modal-title">¡Inténtalo de nuevo!</h2>
+            <p class="modal-stats">Has llegado al nivel <span id="gameOverLevel">1</span></p>
+            <p class="modal-stats">Puntuación: <span id="gameOverScore">0</span> ⭐</p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="restartGame()">REINTENTAR</button>
+                <button class="btn btn-secondary" onclick="goToStart()">MENÚ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURACIÓN =====
+        const CONFIG = {
+            gonogo: {
+                levels: [
+                    { rounds: 8, timeLimit: 2500, nogoChance: 0.2 },
+                    { rounds: 10, timeLimit: 2300, nogoChance: 0.25 },
+                    { rounds: 10, timeLimit: 2100, nogoChance: 0.25 },
+                    { rounds: 12, timeLimit: 2000, nogoChance: 0.3 },
+                    { rounds: 12, timeLimit: 1800, nogoChance: 0.3 },
+                    { rounds: 14, timeLimit: 1700, nogoChance: 0.35 },
+                    { rounds: 14, timeLimit: 1500, nogoChance: 0.35 },
+                    { rounds: 15, timeLimit: 1400, nogoChance: 0.4 },
+                    { rounds: 15, timeLimit: 1300, nogoChance: 0.4 },
+                    { rounds: 16, timeLimit: 1200, nogoChance: 0.45 }
+                ]
+            },
+            traffic: {
+                levels: [
+                    { rounds: 8, timeLimit: 3000, yellowChance: 0.2 },
+                    { rounds: 10, timeLimit: 2800, yellowChance: 0.25 },
+                    { rounds: 10, timeLimit: 2600, yellowChance: 0.25 },
+                    { rounds: 12, timeLimit: 2400, yellowChance: 0.3 },
+                    { rounds: 12, timeLimit: 2200, yellowChance: 0.3 },
+                    { rounds: 14, timeLimit: 2000, yellowChance: 0.33 },
+                    { rounds: 14, timeLimit: 1800, yellowChance: 0.33 },
+                    { rounds: 15, timeLimit: 1600, yellowChance: 0.33 },
+                    { rounds: 15, timeLimit: 1500, yellowChance: 0.33 },
+                    { rounds: 16, timeLimit: 1400, yellowChance: 0.33 }
+                ]
+            }
+        };
+
+        // Pares de emojis para Go/No-Go (Go, No-Go)
+        const EMOJI_PAIRS = [
+            { go: '🦁', nogo: '🐍' },
+            { go: '⭐', nogo: '💀' },
+            { go: '🍎', nogo: '🌶️' },
+            { go: '🐶', nogo: '🦇' },
+            { go: '🌸', nogo: '🌵' },
+            { go: '🎈', nogo: '💣' },
+            { go: '🍪', nogo: '🧅' },
+            { go: '🦋', nogo: '🕷️' },
+            { go: '🚀', nogo: '🌋' },
+            { go: '🎁', nogo: '🗑️' }
+        ];
+
+        // ===== ESTADO DEL JUEGO =====
+        let gameState = {
+            mode: null,
+            level: 1,
+            score: 0,
+            lives: 3,
+            isPlaying: false,
+            
+            // Go/No-Go
+            currentRound: 0,
+            totalRounds: 0,
+            currentEmojis: null,
+            isGoStimulus: true,
+            responded: false,
+            roundTimer: null,
+            timerInterval: null,
+            levelErrors: 0,
+            
+            // Traffic
+            currentLight: 'green',
+            trafficTimer: null
+        };
+
+        // ===== UTILIDADES =====
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const sounds = {
+                correct: { freq: 880, duration: 0.15 },
+                wrong: { freq: 200, duration: 0.3 },
+                tick: { freq: 440, duration: 0.05 },
+                complete: { freq: [523, 659, 784, 1047], duration: 0.4 }
+            };
+            
+            const sound = sounds[type];
+            
+            if (Array.isArray(sound.freq)) {
+                sound.freq.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.15);
+                    }, i * 100);
+                });
+            } else {
+                oscillator.frequency.value = sound.freq;
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + sound.duration);
+            }
+        }
+
+        function showFeedback(isCorrect) {
+            const overlay = document.getElementById('feedbackOverlay');
+            const icon = document.getElementById('feedbackIcon');
+            icon.textContent = isCorrect ? '✅' : '❌';
+            overlay.classList.add('show');
+            setTimeout(() => overlay.classList.remove('show'), 500);
+        }
+
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 25);
+            }
+        }
+
+        function showCountdown(callback) {
+            const overlay = document.getElementById('countdownOverlay');
+            const number = document.getElementById('countdownNumber');
+            let count = 3;
+            
+            overlay.classList.add('active');
+            number.textContent = count;
+            
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    number.textContent = count;
+                    number.style.animation = 'none';
+                    number.offsetHeight; // Trigger reflow
+                    number.style.animation = 'countdownPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                } else {
+                    number.textContent = '¡YA!';
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        callback();
+                    }, 500);
+                    clearInterval(interval);
+                }
+            }, 800);
+        }
+
+        // ===== NAVEGACIÓN =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function selectMode(mode) {
+            gameState.mode = mode;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(mode === 'gonogo' ? 'modeGonogo' : 'modeTraffic').classList.add('selected');
+            document.getElementById('startBtn').style.display = 'block';
+        }
+
+        function goToStart() {
+            hideAllModals();
+            clearAllTimers();
+            gameState.mode = null;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('startBtn').style.display = 'none';
+            showScreen('startScreen');
+        }
+
+        function hideAllModals() {
+            document.getElementById('levelModal').classList.remove('active');
+            document.getElementById('gameOverModal').classList.remove('active');
+        }
+
+        function clearAllTimers() {
+            clearTimeout(gameState.roundTimer);
+            clearInterval(gameState.timerInterval);
+            clearTimeout(gameState.trafficTimer);
+        }
+
+        // ===== INICIO DEL JUEGO =====
+        function startGame() {
+            if (!gameState.mode) return;
+            
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.isPlaying = false;
+            
+            hideAllModals();
+            clearAllTimers();
+            
+            if (gameState.mode === 'gonogo') {
+                initGoNoGo();
+            } else {
+                initTraffic();
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        // ===== MODO GO/NO-GO =====
+        function initGoNoGo() {
+            showScreen('gonogoScreen');
+            updateGoNoGoUI();
+            
+            // Seleccionar emojis para este nivel
+            gameState.currentEmojis = EMOJI_PAIRS[Math.floor(Math.random() * EMOJI_PAIRS.length)];
+            document.getElementById('goEmoji').textContent = gameState.currentEmojis.go;
+            document.getElementById('nogoEmoji').textContent = gameState.currentEmojis.nogo;
+            
+            showCountdown(() => startGoNoGoLevel());
+        }
+
+        function updateGoNoGoUI() {
+            document.getElementById('gonogoLevel').textContent = gameState.level;
+            document.getElementById('gonogoScore').textContent = gameState.score;
+            
+            for (let i = 1; i <= 3; i++) {
+                const life = document.getElementById('gonogoLife' + i);
+                life.classList.toggle('lost', i > gameState.lives);
+            }
+            
+            // Progress dots
+            const progress = document.getElementById('gonogoProgress');
+            progress.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i < gameState.level) dot.classList.add('completed');
+                if (i === gameState.level) dot.classList.add('current');
+                progress.appendChild(dot);
+            }
+        }
+
+        function startGoNoGoLevel() {
+            const levelConfig = CONFIG.gonogo.levels[gameState.level - 1];
+            gameState.currentRound = 0;
+            gameState.totalRounds = levelConfig.rounds;
+            gameState.levelErrors = 0;
+            gameState.isPlaying = true;
+            
+            document.getElementById('gonogoTotalRounds').textContent = levelConfig.rounds;
+            
+            nextGoNoGoRound();
+        }
+
+        function nextGoNoGoRound() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.currentRound++;
+            document.getElementById('gonogoRound').textContent = gameState.currentRound;
+            
+            if (gameState.currentRound > gameState.totalRounds) {
+                completeGoNoGoLevel();
+                return;
+            }
+            
+            const levelConfig = CONFIG.gonogo.levels[gameState.level - 1];
+            
+            // Determinar si es GO o NO-GO
+            gameState.isGoStimulus = Math.random() > levelConfig.nogoChance;
+            gameState.responded = false;
+            
+            // Mostrar estímulo
+            const stimulus = document.getElementById('stimulus');
+            const stimulusArea = document.getElementById('stimulusArea');
+            const instruction = document.getElementById('gonogoInstruction');
+            
+            stimulus.textContent = gameState.isGoStimulus ? gameState.currentEmojis.go : gameState.currentEmojis.nogo;
+            stimulus.style.animation = 'none';
+            stimulus.offsetHeight;
+            stimulus.style.animation = 'stimulusAppear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            
+            stimulusArea.classList.remove('correct', 'wrong');
+            instruction.textContent = '¿Tocas o no tocas?';
+            
+            // Iniciar timer
+            startRoundTimer(levelConfig.timeLimit);
+        }
+
+        function startRoundTimer(duration) {
+            const timerBar = document.getElementById('gonogoTimer');
+            const startTime = Date.now();
+            
+            timerBar.style.width = '100%';
+            timerBar.classList.remove('warning');
+            
+            gameState.timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, duration - elapsed);
+                const percent = (remaining / duration) * 100;
+                
+                timerBar.style.width = percent + '%';
+                
+                if (percent < 30) {
+                    timerBar.classList.add('warning');
+                }
+            }, 50);
+            
+            gameState.roundTimer = setTimeout(() => {
+                clearInterval(gameState.timerInterval);
+                handleTimeout();
+            }, duration);
+        }
+
+        function handleGoNoGoClick() {
+            if (!gameState.isPlaying || gameState.responded) return;
+            
+            gameState.responded = true;
+            clearTimeout(gameState.roundTimer);
+            clearInterval(gameState.timerInterval);
+            
+            const stimulusArea = document.getElementById('stimulusArea');
+            const instruction = document.getElementById('gonogoInstruction');
+            
+            if (gameState.isGoStimulus) {
+                // Correcto: tocó cuando debía
+                stimulusArea.classList.add('correct');
+                instruction.textContent = '¡Muy bien! 👍';
+                playSound('correct');
+                showFeedback(true);
+                gameState.score += 10;
+            } else {
+                // Error: tocó cuando NO debía
+                stimulusArea.classList.add('wrong');
+                instruction.textContent = '¡No debías tocar! 🛑';
+                playSound('wrong');
+                showFeedback(false);
+                gameState.levelErrors++;
+                gameState.lives--;
+                
+                if (gameState.lives <= 0) {
+                    gameState.isPlaying = false;
+                    setTimeout(gameOver, 1000);
+                    return;
+                }
+            }
+            
+            updateGoNoGoUI();
+            
+            setTimeout(() => {
+                if (gameState.isPlaying) nextGoNoGoRound();
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            if (gameState.responded) return;
+            gameState.responded = true;
+            
+            const stimulusArea = document.getElementById('stimulusArea');
+            const instruction = document.getElementById('gonogoInstruction');
+            
+            if (gameState.isGoStimulus) {
+                // Error: no tocó cuando debía
+                stimulusArea.classList.add('wrong');
+                instruction.textContent = '¡Debías tocar! ⏰';
+                playSound('wrong');
+                showFeedback(false);
+                gameState.levelErrors++;
+                gameState.lives--;
+                
+                if (gameState.lives <= 0) {
+                    gameState.isPlaying = false;
+                    setTimeout(gameOver, 1000);
+                    return;
+                }
+            } else {
+                // Correcto: no tocó cuando no debía
+                stimulusArea.classList.add('correct');
+                instruction.textContent = '¡Bien hecho! No tocaste 👍';
+                playSound('correct');
+                showFeedback(true);
+                gameState.score += 10;
+            }
+            
+            updateGoNoGoUI();
+            
+            setTimeout(() => {
+                if (gameState.isPlaying) nextGoNoGoRound();
+            }, 1000);
+        }
+
+        function completeGoNoGoLevel() {
+            gameState.isPlaying = false;
+            
+            // Calcular estrellas basado en errores
+            let stars = 3;
+            if (gameState.levelErrors >= 2) stars = 2;
+            if (gameState.levelErrors >= 4) stars = 1;
+            
+            const bonus = stars * 10;
+            gameState.score += bonus;
+            updateGoNoGoUI();
+            
+            showLevelCompleteModal(stars, bonus);
+        }
+
+        // ===== MODO SEMÁFORO =====
+        function initTraffic() {
+            showScreen('trafficScreen');
+            updateTrafficUI();
+            showCountdown(() => startTrafficLevel());
+        }
+
+        function updateTrafficUI() {
+            document.getElementById('trafficLevel').textContent = gameState.level;
+            document.getElementById('trafficScore').textContent = gameState.score;
+            
+            for (let i = 1; i <= 3; i++) {
+                const life = document.getElementById('trafficLife' + i);
+                life.classList.toggle('lost', i > gameState.lives);
+            }
+            
+            // Progress dots
+            const progress = document.getElementById('trafficProgress');
+            progress.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i < gameState.level) dot.classList.add('completed');
+                if (i === gameState.level) dot.classList.add('current');
+                progress.appendChild(dot);
+            }
+        }
+
+        function startTrafficLevel() {
+            const levelConfig = CONFIG.traffic.levels[gameState.level - 1];
+            gameState.currentRound = 0;
+            gameState.totalRounds = levelConfig.rounds;
+            gameState.levelErrors = 0;
+            gameState.isPlaying = true;
+            
+            document.getElementById('trafficTotalRounds').textContent = levelConfig.rounds;
+            
+            nextTrafficRound();
+        }
+
+        function nextTrafficRound() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.currentRound++;
+            document.getElementById('trafficRound').textContent = gameState.currentRound;
+            
+            if (gameState.currentRound > gameState.totalRounds) {
+                completeTrafficLevel();
+                return;
+            }
+            
+            const levelConfig = CONFIG.traffic.levels[gameState.level - 1];
+            gameState.responded = false;
+            
+            // Determinar color del semáforo
+            const rand = Math.random();
+            if (rand < levelConfig.yellowChance) {
+                gameState.currentLight = 'yellow';
+            } else if (rand < levelConfig.yellowChance + (1 - levelConfig.yellowChance) / 2) {
+                gameState.currentLight = 'red';
+            } else {
+                gameState.currentLight = 'green';
+            }
+            
+            // Actualizar semáforo
+            updateTrafficLight(gameState.currentLight);
+            
+            // Reset botones
+            document.querySelectorAll('.traffic-btn').forEach(btn => {
+                btn.classList.remove('correct', 'wrong');
+            });
+            
+            // Iniciar timer
+            startTrafficTimer(levelConfig.timeLimit);
+        }
+
+        function updateTrafficLight(color) {
+            document.getElementById('bulbRed').classList.toggle('active', color === 'red');
+            document.getElementById('bulbYellow').classList.toggle('active', color === 'yellow');
+            document.getElementById('bulbGreen').classList.toggle('active', color === 'green');
+        }
+
+        function startTrafficTimer(duration) {
+            const timerBar = document.getElementById('trafficTimer');
+            const startTime = Date.now();
+            
+            timerBar.style.width = '100%';
+            timerBar.classList.remove('warning');
+            
+            gameState.timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, duration - elapsed);
+                const percent = (remaining / duration) * 100;
+                
+                timerBar.style.width = percent + '%';
+                
+                if (percent < 30) {
+                    timerBar.classList.add('warning');
+                }
+            }, 50);
+            
+            gameState.trafficTimer = setTimeout(() => {
+                clearInterval(gameState.timerInterval);
+                handleTrafficTimeout();
+            }, duration);
+        }
+
+        function handleTrafficClick(action) {
+            if (!gameState.isPlaying || gameState.responded) return;
+            
+            gameState.responded = true;
+            clearTimeout(gameState.trafficTimer);
+            clearInterval(gameState.timerInterval);
+            
+            const correctActions = {
+                green: 'walk',
+                yellow: 'wait',
+                red: 'stop'
+            };
+            
+            const isCorrect = action === correctActions[gameState.currentLight];
+            const btn = document.querySelector(`.traffic-btn-${action}`);
+            
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playSound('correct');
+                showFeedback(true);
+                gameState.score += 10;
+            } else {
+                btn.classList.add('wrong');
+                playSound('wrong');
+                showFeedback(false);
+                gameState.levelErrors++;
+                gameState.lives--;
+                
+                if (gameState.lives <= 0) {
+                    gameState.isPlaying = false;
+                    setTimeout(gameOver, 1000);
+                    return;
+                }
+            }
+            
+            updateTrafficUI();
+            
+            setTimeout(() => {
+                if (gameState.isPlaying) nextTrafficRound();
+            }, 1200);
+        }
+
+        function handleTrafficTimeout() {
+            if (gameState.responded) return;
+            gameState.responded = true;
+            
+            playSound('wrong');
+            showFeedback(false);
+            gameState.levelErrors++;
+            gameState.lives--;
+            
+            updateTrafficUI();
+            
+            if (gameState.lives <= 0) {
+                gameState.isPlaying = false;
+                setTimeout(gameOver, 1000);
+                return;
+            }
+            
+            setTimeout(() => {
+                if (gameState.isPlaying) nextTrafficRound();
+            }, 1000);
+        }
+
+        function completeTrafficLevel() {
+            gameState.isPlaying = false;
+            
+            let stars = 3;
+            if (gameState.levelErrors >= 2) stars = 2;
+            if (gameState.levelErrors >= 4) stars = 1;
+            
+            const bonus = stars * 10;
+            gameState.score += bonus;
+            updateTrafficUI();
+            
+            showLevelCompleteModal(stars, bonus);
+        }
+
+        // ===== MODALES =====
+        function showLevelCompleteModal(stars, bonus) {
+            const modal = document.getElementById('levelModal');
+            
+            document.getElementById('modalTitle').textContent = 
+                gameState.level === 10 ? '¡INCREÍBLE!' : '¡Nivel Completado!';
+            document.getElementById('modalEmoji').textContent = 
+                stars === 3 ? '🌟' : stars === 2 ? '😊' : '👍';
+            document.getElementById('modalStats').textContent = 
+                `${gameState.levelErrors} errores | +${bonus} bonus`;
+            
+            ['star1', 'star2', 'star3'].forEach((id, i) => {
+                const star = document.getElementById(id);
+                star.classList.remove('earned');
+                if (i < stars) {
+                    setTimeout(() => star.classList.add('earned'), (i + 1) * 300);
+                }
+            });
+            
+            modal.classList.add('active');
+            
+            if (stars === 3) {
+                playSound('complete');
+                createConfetti();
+            }
+        }
+
+        function nextLevel() {
+            hideAllModals();
+            
+            if (gameState.level >= 10) {
+                showEndScreen();
+            } else {
+                gameState.level++;
+                gameState.lives = 3;
+                
+                if (gameState.mode === 'gonogo') {
+                    // Cambiar emojis para el nuevo nivel
+                    gameState.currentEmojis = EMOJI_PAIRS[(gameState.level - 1) % EMOJI_PAIRS.length];
+                    document.getElementById('goEmoji').textContent = gameState.currentEmojis.go;
+                    document.getElementById('nogoEmoji').textContent = gameState.currentEmojis.nogo;
+                    
+                    updateGoNoGoUI();
+                    showCountdown(() => startGoNoGoLevel());
+                } else {
+                    updateTrafficUI();
+                    showCountdown(() => startTrafficLevel());
+                }
+            }
+        }
+
+        function gameOver() {
+            hideAllModals();
+            clearAllTimers();
+            
+            document.getElementById('gameOverLevel').textContent = gameState.level;
+            document.getElementById('gameOverScore').textContent = gameState.score;
+            
+            document.getElementById('gameOverModal').classList.add('active');
+        }
+
+        function showEndScreen() {
+            document.getElementById('endTitle').textContent = '¡FELICIDADES!';
+            document.getElementById('endEmoji').textContent = '🏆';
+            document.getElementById('endMessage').textContent = 
+                gameState.mode === 'gonogo' 
+                    ? '¡Has completado Go/No-Go!' 
+                    : '¡Has completado Semáforo!';
+            document.getElementById('finalScore').textContent = gameState.score;
+            
+            showScreen('endScreen');
+            createConfetti();
+            playSound('complete');
+        }
+
+        // Prevenir zoom
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+    </script>
+</body>
+</html>

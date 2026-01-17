@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Memoria Capitulín - Memoria de Trabajo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #6C5CE7;
+            --primary-dark: #5541d7;
+            --secondary: #00CEC9;
+            --accent: #FD79A8;
+            --warning: #FDCB6E;
+            --bg-gradient-1: #a29bfe;
+            --bg-gradient-2: #6c5ce7;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(2rem, 7vw, 4rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark), 
+                         6px 6px 0 rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 10px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mascot {
+            font-size: clamp(60px, 15vw, 100px);
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(180deg, var(--secondary) 0%, #00b3b3 100%);
+            color: white;
+            box-shadow: 0 6px 0 #009999, var(--shadow);
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #009999, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-accent {
+            background: linear-gradient(180deg, var(--accent) 0%, #e84393 100%);
+            color: white;
+            box-shadow: 0 6px 0 #c0392b, var(--shadow);
+        }
+
+        .btn-accent:hover, .btn-accent:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #c0392b, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            color: var(--text-dark);
+            box-shadow: 0 6px 0 #ccc, var(--shadow);
+        }
+
+        .btn-secondary:hover, .btn-secondary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #ccc, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Selección de modo */
+        .mode-selection {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 30px;
+            width: clamp(280px, 40vw, 350px);
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 4px solid transparent;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .mode-card.selected {
+            border-color: var(--secondary);
+            transform: scale(1.02);
+        }
+
+        .mode-icon {
+            font-size: clamp(3rem, 10vw, 5rem);
+            margin-bottom: 15px;
+        }
+
+        .mode-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .mode-description {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Header del juego */
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .level-indicator {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--primary-dark);
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--warning);
+        }
+
+        .lives-display {
+            display: flex;
+            gap: 5px;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+        }
+
+        .life {
+            transition: all 0.3s;
+        }
+
+        .life.lost {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+
+        /* Área de juego */
+        .game-area {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ===== MODO SECUENCIAS ===== */
+        .sequence-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(10px, 3vw, 25px);
+            margin-bottom: 40px;
+            min-height: 120px;
+            flex-wrap: wrap;
+        }
+
+        .sequence-item {
+            font-size: clamp(3rem, 12vw, 6rem);
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.2));
+        }
+
+        .sequence-item.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .sequence-item.highlight {
+            animation: itemPulse 0.6s ease-in-out;
+        }
+
+        @keyframes itemPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); filter: brightness(1.2) drop-shadow(0 0 20px rgba(255,255,255,0.8)); }
+        }
+
+        .sequence-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: clamp(10px, 3vw, 20px);
+            max-width: 600px;
+        }
+
+        .sequence-option {
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            padding: 15px 25px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+            border: 4px solid transparent;
+        }
+
+        .sequence-option:hover {
+            transform: scale(1.1);
+            border-color: var(--secondary);
+        }
+
+        .sequence-option:active {
+            transform: scale(0.95);
+        }
+
+        .sequence-option.correct {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            animation: correctFlash 0.5s;
+        }
+
+        .sequence-option.wrong {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            animation: shake 0.5s;
+        }
+
+        @keyframes correctFlash {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        /* Indicador de progreso de secuencia */
+        .sequence-progress {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .progress-slot {
+            width: clamp(40px, 10vw, 60px);
+            height: clamp(40px, 10vw, 60px);
+            background: rgba(255,255,255,0.3);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            border: 3px dashed rgba(255,255,255,0.5);
+            transition: all 0.3s;
+        }
+
+        .progress-slot.filled {
+            background: var(--card-bg);
+            border: 3px solid var(--secondary);
+        }
+
+        .progress-slot.current {
+            border-color: var(--warning);
+            animation: slotPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes slotPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(253, 203, 110, 0.5); }
+            50% { box-shadow: 0 0 0 10px rgba(253, 203, 110, 0); }
+        }
+
+        /* ===== MODO SIMON DICE ===== */
+        .simon-container {
+            position: relative;
+            width: clamp(280px, 70vw, 400px);
+            height: clamp(280px, 70vw, 400px);
+        }
+
+        .simon-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30%;
+            height: 30%;
+            background: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .simon-btn {
+            position: absolute;
+            width: 45%;
+            height: 45%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+            opacity: 0.7;
+        }
+
+        .simon-btn:active, .simon-btn.active {
+            opacity: 1;
+            filter: brightness(1.3);
+            transform: scale(0.98);
+        }
+
+        .simon-btn.flash {
+            opacity: 1;
+            filter: brightness(1.5);
+            box-shadow: 0 0 40px currentColor;
+        }
+
+        .simon-btn-red {
+            top: 5%;
+            left: 5%;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-radius: 100% 10% 10% 10%;
+            color: #e74c3c;
+        }
+
+        .simon-btn-blue {
+            top: 5%;
+            right: 5%;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border-radius: 10% 100% 10% 10%;
+            color: #3498db;
+        }
+
+        .simon-btn-yellow {
+            bottom: 5%;
+            left: 5%;
+            background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+            border-radius: 10% 10% 10% 100%;
+            color: #f1c40f;
+        }
+
+        .simon-btn-green {
+            bottom: 5%;
+            right: 5%;
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            border-radius: 10% 10% 100% 10%;
+            color: #2ecc71;
+        }
+
+        /* Mensaje de estado */
+        .status-message {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin: 20px 0;
+            text-align: center;
+            min-height: 40px;
+        }
+
+        .status-message.watching {
+            color: var(--warning);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .status-message.your-turn {
+            color: var(--secondary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Progress bar inferior */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 25px;
+            background: var(--card-bg);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .level-progress {
+            display: flex;
+            gap: 6px;
+        }
+
+        .level-dot {
+            width: clamp(10px, 2.5vw, 16px);
+            height: clamp(10px, 2.5vw, 16px);
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .level-dot.completed {
+            background: linear-gradient(135deg, var(--secondary) 0%, #00b3b3 100%);
+        }
+
+        .level-dot.current {
+            background: linear-gradient(135deg, var(--warning) 0%, #e17055 100%);
+            animation: dotPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-emoji {
+            font-size: clamp(4rem, 15vw, 7rem);
+            margin-bottom: 15px;
+            animation: celebrateEmoji 1s ease-in-out infinite;
+        }
+
+        @keyframes celebrateEmoji {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .modal-stats {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: clamp(2rem, 7vw, 3.5rem);
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+
+        .star.earned {
+            opacity: 1;
+            animation: starPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes starPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confettiFall {
+            to {
+                top: 110vh;
+                transform: rotate(720deg);
+            }
+        }
+
+        /* Countdown */
+        .countdown {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(4rem, 15vw, 8rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark);
+            animation: countdownPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes countdownPop {
+            0% { transform: scale(2); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-header {
+                padding: 10px 15px;
+            }
+            
+            .game-area {
+                top: 65px;
+                bottom: 70px;
+            }
+            
+            .simon-container {
+                width: 85vw;
+                height: 85vw;
+                max-width: 350px;
+                max-height: 350px;
+            }
+        }
+
+        /* Instrucciones en modal de inicio */
+        .instructions-mini {
+            background: rgba(108, 92, 231, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .instructions-mini p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: #555;
+            margin: 8px 0;
+        }
+
+        .instructions-mini strong {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de inicio -->
+    <div id="startScreen" class="screen">
+        <h1 class="title">Memoria Capitulín</h1>
+        <p class="subtitle">Entrena tu memoria de trabajo</p>
+        
+        <div class="mascot">🧠</div>
+        
+        <div class="mode-selection">
+            <div class="mode-card" id="modeSequence" onclick="selectMode('sequence')">
+                <div class="mode-icon">🔢</div>
+                <h3 class="mode-title">Secuencias</h3>
+                <p class="mode-description">Memoriza y repite la secuencia de emojis en el orden correcto</p>
+            </div>
+            
+            <div class="mode-card" id="modeSimon" onclick="selectMode('simon')">
+                <div class="mode-icon">🎨</div>
+                <h3 class="mode-title">Simon Dice</h3>
+                <p class="mode-description">Observa los colores que se iluminan y repite el patrón</p>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="display: none;">¡COMENZAR!</button>
+    </div>
+
+    <!-- Pantalla de juego - Secuencias -->
+    <div id="sequenceScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="seqLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="seqScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="life1">❤️</span>
+                <span class="life" id="life2">❤️</span>
+                <span class="life" id="life3">❤️</span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div id="statusMessage" class="status-message">¡Observa la secuencia!</div>
+            
+            <div id="sequenceDisplay" class="sequence-display"></div>
+            
+            <div id="sequenceProgress" class="sequence-progress"></div>
+            
+            <div id="sequenceOptions" class="sequence-options" style="display: none;"></div>
+        </div>
+        
+        <div class="bottom-bar">
+            <div class="level-progress" id="seqLevelProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla de juego - Simon Dice -->
+    <div id="simonScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="simonLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="simonScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="simonLife1">❤️</span>
+                <span class="life" id="simonLife2">❤️</span>
+                <span class="life" id="simonLife3">❤️</span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div id="simonStatus" class="status-message">¡Observa los colores!</div>
+            
+            <div class="simon-container">
+                <button class="simon-btn simon-btn-red" data-color="red" onclick="simonClick('red')"></button>
+                <button class="simon-btn simon-btn-blue" data-color="blue" onclick="simonClick('blue')"></button>
+                <button class="simon-btn simon-btn-yellow" data-color="yellow" onclick="simonClick('yellow')"></button>
+                <button class="simon-btn simon-btn-green" data-color="green" onclick="simonClick('green')"></button>
+                <div class="simon-center">🦁</div>
+            </div>
+        </div>
+        
+        <div class="bottom-bar">
+            <div class="level-progress" id="simonLevelProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla final -->
+    <div id="endScreen" class="screen hidden">
+        <h1 class="title" id="endTitle">¡GENIAL!</h1>
+        <div class="mascot" id="endEmoji">🏆</div>
+        <p class="subtitle" id="endMessage">Has completado todos los niveles</p>
+        <div class="score-display" style="font-size: 3rem; margin: 20px;">
+            ⭐ <span id="finalScore">0</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
+            <button class="btn btn-secondary" onclick="goToStart()">CAMBIAR MODO</button>
+        </div>
+    </div>
+
+    <!-- Modal de nivel -->
+    <div id="levelModal" class="modal-overlay">
+        <div class="modal">
+            <div id="modalEmoji" class="modal-emoji">🎉</div>
+            <h2 id="modalTitle" class="modal-title">¡Nivel Completado!</h2>
+            <div class="stars-container">
+                <span class="star" id="star1">⭐</span>
+                <span class="star" id="star2">⭐</span>
+                <span class="star" id="star3">⭐</span>
+            </div>
+            <p id="modalStats" class="modal-stats"></p>
+            <button class="btn btn-primary" onclick="nextLevel()">SIGUIENTE</button>
+        </div>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="gameOverModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-emoji">😅</div>
+            <h2 class="modal-title">¡Inténtalo de nuevo!</h2>
+            <p class="modal-stats">Has llegado al nivel <span id="gameOverLevel">1</span></p>
+            <p class="modal-stats">Puntuación: <span id="gameOverScore">0</span> ⭐</p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="restartGame()">REINTENTAR</button>
+                <button class="btn btn-secondary" onclick="goToStart()">MENÚ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURACIÓN =====
+        const CONFIG = {
+            sequence: {
+                levels: [
+                    { length: 2, showTime: 800, options: 4 },
+                    { length: 2, showTime: 700, options: 5 },
+                    { length: 3, showTime: 700, options: 5 },
+                    { length: 3, showTime: 600, options: 6 },
+                    { length: 4, showTime: 600, options: 6 },
+                    { length: 4, showTime: 500, options: 7 },
+                    { length: 5, showTime: 500, options: 7 },
+                    { length: 5, showTime: 450, options: 8 },
+                    { length: 6, showTime: 450, options: 8 },
+                    { length: 6, showTime: 400, options: 9 }
+                ]
+            },
+            simon: {
+                levels: [
+                    { length: 2, speed: 800 },
+                    { length: 3, speed: 750 },
+                    { length: 3, speed: 700 },
+                    { length: 4, speed: 650 },
+                    { length: 4, speed: 600 },
+                    { length: 5, speed: 550 },
+                    { length: 5, speed: 500 },
+                    { length: 6, speed: 450 },
+                    { length: 6, speed: 400 },
+                    { length: 7, speed: 350 }
+                ]
+            }
+        };
+
+        // Emojis para secuencias (variados para cada nivel)
+        const EMOJI_POOLS = [
+            ['🍎', '🍊', '🍋', '🍇', '🍓', '🫐', '🍑', '🍒', '🥭'],
+            ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨'],
+            ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓', '🥏'],
+            ['🚗', '🚕', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '✈️'],
+            ['⭐', '🌙', '☀️', '🌈', '❄️', '💎', '🔶', '💜', '💚'],
+            ['🎸', '🎹', '🥁', '🎺', '🎷', '🎻', '🪕', '🎤', '🔔'],
+            ['🌸', '🌺', '🌻', '🌹', '🌷', '🌼', '💐', '🍀', '🌿'],
+            ['🦋', '🐝', '🐞', '🐌', '🦗', '🪲', '🐛', '🦟', '🪰'],
+            ['🍕', '🍔', '🌭', '🍟', '🌮', '🍿', '🧁', '🍩', '🍪'],
+            ['🎈', '🎁', '🎀', '🎊', '🎉', '🎭', '🎪', '🎨', '🎯']
+        ];
+
+        // ===== ESTADO DEL JUEGO =====
+        let gameState = {
+            mode: null, // 'sequence' o 'simon'
+            level: 1,
+            score: 0,
+            lives: 3,
+            isPlaying: false,
+            
+            // Estado secuencias
+            currentSequence: [],
+            userSequence: [],
+            currentPosition: 0,
+            currentEmojiPool: [],
+            
+            // Estado Simon
+            simonSequence: [],
+            simonPosition: 0,
+            simonCanPlay: false
+        };
+
+        // ===== UTILIDADES =====
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const sounds = {
+                correct: { freq: [523, 659, 784], duration: 0.3 },
+                wrong: { freq: [200], duration: 0.2 },
+                show: { freq: [440], duration: 0.15 },
+                red: { freq: [329.63], duration: 0.3 },
+                blue: { freq: [261.63], duration: 0.3 },
+                yellow: { freq: [392], duration: 0.3 },
+                green: { freq: [523.25], duration: 0.3 },
+                complete: { freq: [523, 659, 784, 1047], duration: 0.4 }
+            };
+            
+            const sound = sounds[type] || sounds.show;
+            
+            if (sound.freq.length === 1) {
+                oscillator.frequency.value = sound.freq[0];
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + sound.duration);
+            } else {
+                sound.freq.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.15);
+                    }, i * 100);
+                });
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 25);
+            }
+        }
+
+        // ===== NAVEGACIÓN =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function selectMode(mode) {
+            gameState.mode = mode;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(mode === 'sequence' ? 'modeSequence' : 'modeSimon').classList.add('selected');
+            document.getElementById('startBtn').style.display = 'block';
+        }
+
+        function goToStart() {
+            hideAllModals();
+            gameState.mode = null;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('startBtn').style.display = 'none';
+            showScreen('startScreen');
+        }
+
+        function hideAllModals() {
+            document.getElementById('levelModal').classList.remove('active');
+            document.getElementById('gameOverModal').classList.remove('active');
+        }
+
+        // ===== INICIO DEL JUEGO =====
+        function startGame() {
+            if (!gameState.mode) return;
+            
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.isPlaying = true;
+            
+            hideAllModals();
+            
+            if (gameState.mode === 'sequence') {
+                initSequenceGame();
+            } else {
+                initSimonGame();
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        // ===== MODO SECUENCIAS =====
+        function initSequenceGame() {
+            showScreen('sequenceScreen');
+            updateSequenceUI();
+            generateSequenceLevel();
+        }
+
+        function updateSequenceUI() {
+            document.getElementById('seqLevel').textContent = gameState.level;
+            document.getElementById('seqScore').textContent = gameState.score;
+            
+            // Vidas
+            for (let i = 1; i <= 3; i++) {
+                const life = document.getElementById('life' + i);
+                life.classList.toggle('lost', i > gameState.lives);
+            }
+            
+            // Progreso de niveles
+            const progressContainer = document.getElementById('seqLevelProgress');
+            progressContainer.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i < gameState.level) dot.classList.add('completed');
+                if (i === gameState.level) dot.classList.add('current');
+                progressContainer.appendChild(dot);
+            }
+        }
+
+        function generateSequenceLevel() {
+            const levelConfig = CONFIG.sequence.levels[gameState.level - 1];
+            
+            // Seleccionar pool de emojis aleatorio
+            gameState.currentEmojiPool = shuffleArray(EMOJI_POOLS[Math.floor(Math.random() * EMOJI_POOLS.length)]);
+            
+            // Generar secuencia
+            gameState.currentSequence = [];
+            for (let i = 0; i < levelConfig.length; i++) {
+                gameState.currentSequence.push(
+                    gameState.currentEmojiPool[Math.floor(Math.random() * levelConfig.options)]
+                );
+            }
+            
+            gameState.userSequence = [];
+            gameState.currentPosition = 0;
+            
+            // Preparar UI
+            const display = document.getElementById('sequenceDisplay');
+            const options = document.getElementById('sequenceOptions');
+            const progress = document.getElementById('sequenceProgress');
+            const status = document.getElementById('statusMessage');
+            
+            display.innerHTML = '';
+            options.style.display = 'none';
+            progress.innerHTML = '';
+            status.textContent = '¡Observa la secuencia!';
+            status.className = 'status-message watching';
+            
+            // Crear slots de progreso
+            for (let i = 0; i < levelConfig.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'progress-slot';
+                slot.id = 'slot' + i;
+                progress.appendChild(slot);
+            }
+            
+            // Mostrar secuencia
+            showSequence(levelConfig);
+        }
+
+        function showSequence(levelConfig) {
+            const display = document.getElementById('sequenceDisplay');
+            let index = 0;
+            
+            const showNext = () => {
+                if (index < gameState.currentSequence.length) {
+                    const item = document.createElement('div');
+                    item.className = 'sequence-item';
+                    item.textContent = gameState.currentSequence[index];
+                    display.appendChild(item);
+                    
+                    setTimeout(() => {
+                        item.classList.add('show');
+                        item.classList.add('highlight');
+                        playSound('show');
+                        
+                        setTimeout(() => {
+                            item.classList.remove('highlight');
+                        }, levelConfig.showTime * 0.8);
+                    }, 50);
+                    
+                    index++;
+                    setTimeout(showNext, levelConfig.showTime);
+                } else {
+                    // Secuencia mostrada, turno del jugador
+                    setTimeout(() => {
+                        startUserTurn();
+                    }, 500);
+                }
+            };
+            
+            setTimeout(showNext, 500);
+        }
+
+        function startUserTurn() {
+            const levelConfig = CONFIG.sequence.levels[gameState.level - 1];
+            const display = document.getElementById('sequenceDisplay');
+            const options = document.getElementById('sequenceOptions');
+            const status = document.getElementById('statusMessage');
+            
+            // Ocultar secuencia
+            display.innerHTML = '';
+            
+            // Mostrar mensaje
+            status.textContent = '¡Tu turno! Repite la secuencia';
+            status.className = 'status-message your-turn';
+            
+            // Marcar primer slot
+            document.getElementById('slot0').classList.add('current');
+            
+            // Generar opciones (incluyendo los correctos + extras aleatorios)
+            const optionEmojis = [...new Set(gameState.currentSequence)];
+            while (optionEmojis.length < levelConfig.options) {
+                const random = gameState.currentEmojiPool[Math.floor(Math.random() * gameState.currentEmojiPool.length)];
+                if (!optionEmojis.includes(random)) {
+                    optionEmojis.push(random);
+                }
+            }
+            
+            const shuffledOptions = shuffleArray(optionEmojis);
+            
+            options.innerHTML = '';
+            shuffledOptions.forEach(emoji => {
+                const btn = document.createElement('div');
+                btn.className = 'sequence-option';
+                btn.textContent = emoji;
+                btn.onclick = () => handleSequenceClick(emoji, btn);
+                options.appendChild(btn);
+            });
+            
+            options.style.display = 'flex';
+            gameState.isPlaying = true;
+        }
+
+        function handleSequenceClick(emoji, element) {
+            if (!gameState.isPlaying) return;
+            
+            const expected = gameState.currentSequence[gameState.currentPosition];
+            
+            if (emoji === expected) {
+                // Correcto
+                element.classList.add('correct');
+                playSound('correct');
+                
+                // Actualizar slot
+                const slot = document.getElementById('slot' + gameState.currentPosition);
+                slot.textContent = emoji;
+                slot.classList.add('filled');
+                slot.classList.remove('current');
+                
+                gameState.userSequence.push(emoji);
+                gameState.currentPosition++;
+                
+                setTimeout(() => {
+                    element.classList.remove('correct');
+                    
+                    if (gameState.currentPosition >= gameState.currentSequence.length) {
+                        // Nivel completado
+                        completeSequenceLevel();
+                    } else {
+                        // Siguiente posición
+                        document.getElementById('slot' + gameState.currentPosition).classList.add('current');
+                    }
+                }, 300);
+            } else {
+                // Error
+                element.classList.add('wrong');
+                playSound('wrong');
+                gameState.lives--;
+                updateSequenceUI();
+                
+                setTimeout(() => {
+                    element.classList.remove('wrong');
+                    
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    } else {
+                        // Reiniciar nivel
+                        generateSequenceLevel();
+                    }
+                }, 500);
+            }
+        }
+
+        function completeSequenceLevel() {
+            gameState.isPlaying = false;
+            const basePoints = gameState.level * 10;
+            const livesBonus = gameState.lives * 5;
+            const points = basePoints + livesBonus;
+            gameState.score += points;
+            
+            updateSequenceUI();
+            
+            // Calcular estrellas
+            let stars = 3;
+            if (gameState.lives === 2) stars = 2;
+            if (gameState.lives === 1) stars = 1;
+            
+            showLevelCompleteModal(stars, points);
+        }
+
+        // ===== MODO SIMON DICE =====
+        function initSimonGame() {
+            showScreen('simonScreen');
+            updateSimonUI();
+            generateSimonLevel();
+        }
+
+        function updateSimonUI() {
+            document.getElementById('simonLevel').textContent = gameState.level;
+            document.getElementById('simonScore').textContent = gameState.score;
+            
+            // Vidas
+            for (let i = 1; i <= 3; i++) {
+                const life = document.getElementById('simonLife' + i);
+                life.classList.toggle('lost', i > gameState.lives);
+            }
+            
+            // Progreso
+            const progressContainer = document.getElementById('simonLevelProgress');
+            progressContainer.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i < gameState.level) dot.classList.add('completed');
+                if (i === gameState.level) dot.classList.add('current');
+                progressContainer.appendChild(dot);
+            }
+        }
+
+        function generateSimonLevel() {
+            const levelConfig = CONFIG.simon.levels[gameState.level - 1];
+            const colors = ['red', 'blue', 'yellow', 'green'];
+            
+            // Generar secuencia
+            gameState.simonSequence = [];
+            for (let i = 0; i < levelConfig.length; i++) {
+                gameState.simonSequence.push(colors[Math.floor(Math.random() * 4)]);
+            }
+            
+            gameState.simonPosition = 0;
+            gameState.simonCanPlay = false;
+            
+            const status = document.getElementById('simonStatus');
+            status.textContent = '¡Observa los colores!';
+            status.className = 'status-message watching';
+            
+            // Mostrar secuencia
+            setTimeout(() => playSimonSequence(levelConfig.speed), 800);
+        }
+
+        function playSimonSequence(speed) {
+            let index = 0;
+            
+            const playNext = () => {
+                if (index < gameState.simonSequence.length) {
+                    const color = gameState.simonSequence[index];
+                    flashSimonButton(color, speed * 0.7);
+                    playSound(color);
+                    
+                    index++;
+                    setTimeout(playNext, speed);
+                } else {
+                    // Turno del jugador
+                    setTimeout(() => {
+                        const status = document.getElementById('simonStatus');
+                        status.textContent = '¡Tu turno!';
+                        status.className = 'status-message your-turn';
+                        gameState.simonCanPlay = true;
+                    }, 300);
+                }
+            };
+            
+            playNext();
+        }
+
+        function flashSimonButton(color, duration) {
+            const btn = document.querySelector(`.simon-btn-${color}`);
+            btn.classList.add('flash');
+            setTimeout(() => btn.classList.remove('flash'), duration);
+        }
+
+        function simonClick(color) {
+            if (!gameState.simonCanPlay) return;
+            
+            const btn = document.querySelector(`.simon-btn-${color}`);
+            btn.classList.add('active');
+            playSound(color);
+            
+            setTimeout(() => btn.classList.remove('active'), 200);
+            
+            const expected = gameState.simonSequence[gameState.simonPosition];
+            
+            if (color === expected) {
+                gameState.simonPosition++;
+                
+                if (gameState.simonPosition >= gameState.simonSequence.length) {
+                    // Nivel completado
+                    gameState.simonCanPlay = false;
+                    completeSimonLevel();
+                }
+            } else {
+                // Error
+                gameState.simonCanPlay = false;
+                gameState.lives--;
+                updateSimonUI();
+                
+                const status = document.getElementById('simonStatus');
+                status.textContent = '¡Ups! Era ' + getColorName(expected);
+                
+                playSound('wrong');
+                
+                setTimeout(() => {
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    } else {
+                        generateSimonLevel();
+                    }
+                }, 1500);
+            }
+        }
+
+        function getColorName(color) {
+            const names = { red: '🔴 Rojo', blue: '🔵 Azul', yellow: '🟡 Amarillo', green: '🟢 Verde' };
+            return names[color];
+        }
+
+        function completeSimonLevel() {
+            const basePoints = gameState.level * 10;
+            const livesBonus = gameState.lives * 5;
+            const points = basePoints + livesBonus;
+            gameState.score += points;
+            
+            updateSimonUI();
+            
+            let stars = 3;
+            if (gameState.lives === 2) stars = 2;
+            if (gameState.lives === 1) stars = 1;
+            
+            playSound('complete');
+            showLevelCompleteModal(stars, points);
+        }
+
+        // ===== MODALES =====
+        function showLevelCompleteModal(stars, points) {
+            const modal = document.getElementById('levelModal');
+            
+            document.getElementById('modalTitle').textContent = 
+                gameState.level === 10 ? '¡INCREÍBLE!' : '¡Nivel Completado!';
+            document.getElementById('modalEmoji').textContent = 
+                stars === 3 ? '🌟' : stars === 2 ? '😊' : '👍';
+            document.getElementById('modalStats').textContent = `+${points} puntos`;
+            
+            // Reset y animar estrellas
+            ['star1', 'star2', 'star3'].forEach((id, i) => {
+                const star = document.getElementById(id);
+                star.classList.remove('earned');
+                if (i < stars) {
+                    setTimeout(() => star.classList.add('earned'), (i + 1) * 300);
+                }
+            });
+            
+            modal.classList.add('active');
+            
+            if (stars === 3) {
+                createConfetti();
+            }
+        }
+
+        function nextLevel() {
+            hideAllModals();
+            
+            if (gameState.level >= 10) {
+                showEndScreen();
+            } else {
+                gameState.level++;
+                gameState.lives = 3; // Restaurar vidas en nuevo nivel
+                
+                if (gameState.mode === 'sequence') {
+                    updateSequenceUI();
+                    setTimeout(generateSequenceLevel, 300);
+                } else {
+                    updateSimonUI();
+                    setTimeout(generateSimonLevel, 300);
+                }
+            }
+        }
+
+        function gameOver() {
+            hideAllModals();
+            
+            document.getElementById('gameOverLevel').textContent = gameState.level;
+            document.getElementById('gameOverScore').textContent = gameState.score;
+            
+            document.getElementById('gameOverModal').classList.add('active');
+        }
+
+        function showEndScreen() {
+            document.getElementById('endTitle').textContent = '¡FELICIDADES!';
+            document.getElementById('endEmoji').textContent = '🏆';
+            document.getElementById('endMessage').textContent = 
+                gameState.mode === 'sequence' 
+                    ? '¡Has completado Secuencias!' 
+                    : '¡Has completado Simon Dice!';
+            document.getElementById('finalScore').textContent = gameState.score;
+            
+            showScreen('endScreen');
+            createConfetti();
+            playSound('complete');
+        }
+
+        // Prevenir zoom
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+    </script>
+</body>
+</html>

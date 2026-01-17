@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>¡Encuentra a Capitulín! - Atención Sostenida</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --secondary: #FF9800;
+            --accent: #E91E63;
+            --bg-gradient-1: #a8e063;
+            --bg-gradient-2: #56ab2f;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Pantalla de inicio */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark), 
+                         6px 6px 0 rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 10px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mascot-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .mascot {
+            font-size: clamp(80px, 20vw, 150px);
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(180deg, var(--secondary) 0%, #F57C00 100%);
+            color: white;
+            box-shadow: 0 6px 0 #E65100, var(--shadow);
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #E65100, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            color: var(--text-dark);
+            box-shadow: 0 6px 0 #ccc, var(--shadow);
+        }
+
+        .btn-secondary:hover, .btn-secondary:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #ccc, 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Pantalla de juego */
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .level-indicator {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--primary-dark);
+        }
+
+        .target-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 3px solid var(--secondary);
+        }
+
+        .target-label {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+        }
+
+        .target-emoji {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .timer-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: var(--accent);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .timer-display.warning {
+            animation: timerPulse 0.5s ease-in-out infinite;
+            color: #f44336;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* Área de juego */
+        .game-area {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .game-item {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            cursor: pointer;
+            transition: transform 0.2s;
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .game-item:hover {
+            transform: scale(1.1);
+        }
+
+        .game-item:active {
+            transform: scale(0.9);
+        }
+
+        .game-item.wrong {
+            animation: shake 0.5s;
+        }
+
+        .game-item.correct {
+            animation: correctPop 0.6s forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        @keyframes correctPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Progreso de niveles */
+        .progress-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: var(--card-bg);
+            padding: 12px 25px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-dot {
+            width: clamp(12px, 3vw, 20px);
+            height: clamp(12px, 3vw, 20px);
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .progress-dot.completed {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            transform: scale(1.1);
+        }
+
+        .progress-dot.current {
+            background: linear-gradient(135deg, var(--secondary) 0%, #F57C00 100%);
+            animation: currentDot 1s ease-in-out infinite;
+        }
+
+        @keyframes currentDot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* Modal de nivel completado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.8rem, 6vw, 3rem);
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .modal-emoji {
+            font-size: clamp(4rem, 15vw, 8rem);
+            margin: 20px 0;
+            animation: celebrateEmoji 1s ease-in-out infinite;
+        }
+
+        @keyframes celebrateEmoji {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        .modal-stats {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .star {
+            font-size: clamp(2rem, 8vw, 4rem);
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+
+        .star.earned {
+            opacity: 1;
+            animation: starPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes starPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confettiFall {
+            to {
+                top: 110vh;
+                transform: rotate(720deg);
+            }
+        }
+
+        /* Pantalla final */
+        .final-score {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(3rem, 10vw, 6rem);
+            color: var(--secondary);
+            text-shadow: 4px 4px 0 #E65100;
+        }
+
+        .final-message {
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: white;
+            margin: 20px 0;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+
+        /* Instrucciones */
+        .instructions {
+            background: var(--card-bg);
+            padding: 25px 35px;
+            border-radius: 20px;
+            margin: 20px 0;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+        }
+
+        .instructions h3 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+        }
+
+        .instructions p {
+            color: var(--text-dark);
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            line-height: 1.6;
+        }
+
+        /* Efectos táctiles */
+        .touch-effect {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%) scale(0);
+            pointer-events: none;
+            animation: touchRipple 0.6s forwards;
+        }
+
+        @keyframes touchRipple {
+            to {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .game-header {
+                padding: 10px 15px;
+            }
+            
+            .game-area {
+                top: 70px;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .progress-container {
+                padding: 8px 15px;
+                bottom: 10px;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            gap: 10px;
+        }
+
+        .loading-dot {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            animation: loadingBounce 0.6s ease-in-out infinite;
+        }
+
+        .loading-dot:nth-child(2) { animation-delay: 0.1s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes loadingBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de inicio -->
+    <div id="startScreen" class="screen">
+        <h1 class="title">¡Encuentra a Capitulín!</h1>
+        <p class="subtitle">Juego de Atención Sostenida</p>
+        
+        <div class="mascot-container">
+            <div class="mascot">🦁</div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 ¿Cómo jugar?</h3>
+            <p>Busca y toca el personaje que aparece arriba entre todos los demás. ¡Cuanto más rápido lo encuentres, más estrellas ganarás!</p>
+        </div>
+        
+        <button class="btn btn-primary" onclick="startGame()">¡JUGAR!</button>
+    </div>
+
+    <!-- Pantalla de juego -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="currentLevel">1</span>/10</div>
+            <div class="target-display">
+                <span class="target-label">Busca:</span>
+                <span id="targetEmoji" class="target-emoji">🦁</span>
+            </div>
+            <div id="timer" class="timer-display">0:00</div>
+        </div>
+        
+        <div id="gameArea" class="game-area"></div>
+        
+        <div class="progress-container">
+            <div class="progress-dot" data-level="1"></div>
+            <div class="progress-dot" data-level="2"></div>
+            <div class="progress-dot" data-level="3"></div>
+            <div class="progress-dot" data-level="4"></div>
+            <div class="progress-dot" data-level="5"></div>
+            <div class="progress-dot" data-level="6"></div>
+            <div class="progress-dot" data-level="7"></div>
+            <div class="progress-dot" data-level="8"></div>
+            <div class="progress-dot" data-level="9"></div>
+            <div class="progress-dot" data-level="10"></div>
+        </div>
+    </div>
+
+    <!-- Modal nivel completado -->
+    <div id="levelModal" class="modal-overlay">
+        <div class="modal">
+            <div id="modalEmoji" class="modal-emoji">🎉</div>
+            <h2 id="modalTitle" class="modal-title">¡Nivel Completado!</h2>
+            <div class="stars-container">
+                <span class="star" id="star1">⭐</span>
+                <span class="star" id="star2">⭐</span>
+                <span class="star" id="star3">⭐</span>
+            </div>
+            <p id="modalStats" class="modal-stats">Tiempo: 5.2 segundos</p>
+            <button class="btn btn-primary" onclick="nextLevel()">SIGUIENTE</button>
+        </div>
+    </div>
+
+    <!-- Pantalla final -->
+    <div id="endScreen" class="screen hidden">
+        <h1 class="title">¡FELICIDADES!</h1>
+        <div class="mascot-container">
+            <div class="mascot">🏆</div>
+        </div>
+        <p class="final-message">Has completado los 10 niveles</p>
+        <div class="final-score">
+            <span id="totalStars">0</span>/30 ⭐
+        </div>
+        <p class="final-message" id="finalTime">Tiempo total: 0:00</p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
+            <button class="btn btn-secondary" onclick="goToStart()">INICIO</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración del juego
+        const CONFIG = {
+            levels: [
+                { items: 6, targets: 1, timeGoal: 5 },
+                { items: 9, targets: 1, timeGoal: 6 },
+                { items: 12, targets: 1, timeGoal: 7 },
+                { items: 16, targets: 2, timeGoal: 8 },
+                { items: 20, targets: 2, timeGoal: 9 },
+                { items: 25, targets: 2, timeGoal: 10 },
+                { items: 30, targets: 3, timeGoal: 12 },
+                { items: 36, targets: 3, timeGoal: 14 },
+                { items: 42, targets: 4, timeGoal: 16 },
+                { items: 50, targets: 5, timeGoal: 20 }
+            ]
+        };
+
+        // Conjuntos de emojis temáticos para variedad
+        const EMOJI_SETS = [
+            { target: '🦁', distractors: ['🐯', '🐱', '🐶', '🐺', '🦊', '🐻', '🐼', '🐨', '🐵', '🐸', '🐰', '🐹'] },
+            { target: '🚗', distractors: ['🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🛻', '🚚', '🚛', '🚜'] },
+            { target: '🍎', distractors: ['🍊', '🍋', '🍇', '🍓', '🫐', '🍑', '🍒', '🥭', '🍍', '🥝', '🍐', '🍌'] },
+            { target: '⭐', distractors: ['🌟', '✨', '💫', '🌙', '☀️', '🌈', '❄️', '💎', '🔶', '🔷', '💜', '💚'] },
+            { target: '🏀', distractors: ['⚽', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🎱', '🥏', '🏓', '🏸', '🥊'] },
+            { target: '🦋', distractors: ['🐝', '🐛', '🐌', '🐞', '🐜', '🪲', '🦗', '🪳', '🦟', '🪰', '🪱', '🐛'] },
+            { target: '🌸', distractors: ['🌺', '🌻', '🌹', '🌷', '🌼', '💐', '🪻', '🪷', '🌾', '🍀', '🌿', '🍃'] },
+            { target: '🎸', distractors: ['🎹', '🥁', '🎺', '🎷', '🎻', '🪕', '🪗', '🎤', '🎧', '🔔', '🎵', '🎶'] },
+            { target: '🐙', distractors: ['🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🦈', '🐊', '🐢'] },
+            { target: '🚀', distractors: ['✈️', '🛸', '🛩️', '🚁', '🛶', '⛵', '🚤', '🛥️', '🚢', '🛫', '🛬', '💺'] }
+        ];
+
+        // Estado del juego
+        let gameState = {
+            currentLevel: 1,
+            targetsFound: 0,
+            targetsNeeded: 1,
+            startTime: 0,
+            totalTime: 0,
+            timerInterval: null,
+            stars: [],
+            currentEmojiSet: null,
+            isPlaying: false
+        };
+
+        // Elementos DOM
+        const screens = {
+            start: document.getElementById('startScreen'),
+            game: document.getElementById('gameScreen'),
+            end: document.getElementById('endScreen')
+        };
+
+        const elements = {
+            currentLevel: document.getElementById('currentLevel'),
+            targetEmoji: document.getElementById('targetEmoji'),
+            timer: document.getElementById('timer'),
+            gameArea: document.getElementById('gameArea'),
+            levelModal: document.getElementById('levelModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalEmoji: document.getElementById('modalEmoji'),
+            modalStats: document.getElementById('modalStats'),
+            totalStars: document.getElementById('totalStars'),
+            finalTime: document.getElementById('finalTime')
+        };
+
+        // Funciones de utilidad
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 10);
+            return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}.${ms}`;
+        }
+
+        function playSound(type) {
+            // Crear sonidos con Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (type === 'correct') {
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialDecayTo = 0.01;
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.15);
+            } else if (type === 'complete') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.2);
+                    }, i * 100);
+                });
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 30);
+            }
+        }
+
+        function createTouchEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'touch-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), 600);
+        }
+
+        // Funciones del juego
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+        }
+
+        function updateProgressDots() {
+            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                dot.classList.remove('completed', 'current');
+                if (index + 1 < gameState.currentLevel) {
+                    dot.classList.add('completed');
+                } else if (index + 1 === gameState.currentLevel) {
+                    dot.classList.add('current');
+                }
+            });
+        }
+
+        function startTimer() {
+            gameState.startTime = Date.now();
+            gameState.timerInterval = setInterval(() => {
+                const elapsed = (Date.now() - gameState.startTime) / 1000;
+                elements.timer.textContent = formatTime(elapsed);
+                
+                const timeGoal = CONFIG.levels[gameState.currentLevel - 1].timeGoal;
+                if (elapsed > timeGoal * 1.5) {
+                    elements.timer.classList.add('warning');
+                } else {
+                    elements.timer.classList.remove('warning');
+                }
+            }, 100);
+        }
+
+        function stopTimer() {
+            clearInterval(gameState.timerInterval);
+            return (Date.now() - gameState.startTime) / 1000;
+        }
+
+        function generateLevel() {
+            const levelConfig = CONFIG.levels[gameState.currentLevel - 1];
+            gameState.targetsFound = 0;
+            gameState.targetsNeeded = levelConfig.targets;
+            gameState.isPlaying = true;
+            
+            // Seleccionar set de emojis aleatorio para este nivel
+            gameState.currentEmojiSet = EMOJI_SETS[Math.floor(Math.random() * EMOJI_SETS.length)];
+            
+            // Actualizar UI
+            elements.currentLevel.textContent = gameState.currentLevel;
+            elements.targetEmoji.textContent = gameState.currentEmojiSet.target;
+            elements.timer.classList.remove('warning');
+            
+            // Generar items
+            const items = [];
+            
+            // Añadir targets
+            for (let i = 0; i < levelConfig.targets; i++) {
+                items.push({ emoji: gameState.currentEmojiSet.target, isTarget: true });
+            }
+            
+            // Añadir distractores
+            const distractorCount = levelConfig.items - levelConfig.targets;
+            const shuffledDistractors = shuffleArray(gameState.currentEmojiSet.distractors);
+            
+            for (let i = 0; i < distractorCount; i++) {
+                items.push({ 
+                    emoji: shuffledDistractors[i % shuffledDistractors.length], 
+                    isTarget: false 
+                });
+            }
+            
+            // Mezclar y renderizar
+            const shuffledItems = shuffleArray(items);
+            elements.gameArea.innerHTML = '';
+            
+            shuffledItems.forEach((item, index) => {
+                const element = document.createElement('div');
+                element.className = 'game-item';
+                element.textContent = item.emoji;
+                element.style.animationDelay = (index * 0.03) + 's';
+                element.dataset.isTarget = item.isTarget;
+                
+                element.addEventListener('click', (e) => handleItemClick(e, element, item.isTarget));
+                element.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    createTouchEffect(touch.clientX, touch.clientY);
+                    handleItemClick(e, element, item.isTarget);
+                }, { passive: false });
+                
+                elements.gameArea.appendChild(element);
+            });
+            
+            updateProgressDots();
+            startTimer();
+        }
+
+        function handleItemClick(event, element, isTarget) {
+            if (!gameState.isPlaying) return;
+            
+            if (isTarget && !element.classList.contains('correct')) {
+                element.classList.add('correct');
+                playSound('correct');
+                gameState.targetsFound++;
+                
+                if (gameState.targetsFound >= gameState.targetsNeeded) {
+                    completeLevel();
+                }
+            } else if (!isTarget) {
+                element.classList.add('wrong');
+                playSound('wrong');
+                setTimeout(() => element.classList.remove('wrong'), 500);
+            }
+        }
+
+        function completeLevel() {
+            gameState.isPlaying = false;
+            const time = stopTimer();
+            gameState.totalTime += time;
+            
+            // Calcular estrellas
+            const timeGoal = CONFIG.levels[gameState.currentLevel - 1].timeGoal;
+            let stars = 1;
+            if (time <= timeGoal) stars = 3;
+            else if (time <= timeGoal * 1.5) stars = 2;
+            
+            gameState.stars.push(stars);
+            
+            // Mostrar modal
+            setTimeout(() => {
+                elements.modalTitle.textContent = gameState.currentLevel === 10 
+                    ? '¡INCREÍBLE!' 
+                    : '¡Nivel Completado!';
+                elements.modalEmoji.textContent = stars === 3 ? '🌟' : stars === 2 ? '😊' : '👍';
+                elements.modalStats.textContent = `Tiempo: ${formatTime(time)} segundos`;
+                
+                // Animar estrellas
+                ['star1', 'star2', 'star3'].forEach((id, index) => {
+                    const starEl = document.getElementById(id);
+                    starEl.classList.remove('earned');
+                    if (index < stars) {
+                        setTimeout(() => starEl.classList.add('earned'), (index + 1) * 300);
+                    }
+                });
+                
+                elements.levelModal.classList.add('active');
+                
+                if (stars === 3) {
+                    playSound('complete');
+                    createConfetti();
+                }
+            }, 600);
+        }
+
+        function nextLevel() {
+            elements.levelModal.classList.remove('active');
+            
+            if (gameState.currentLevel >= 10) {
+                showEndScreen();
+            } else {
+                gameState.currentLevel++;
+                setTimeout(generateLevel, 300);
+            }
+        }
+
+        function showEndScreen() {
+            const totalStars = gameState.stars.reduce((a, b) => a + b, 0);
+            elements.totalStars.textContent = totalStars;
+            elements.finalTime.textContent = `Tiempo total: ${formatTime(gameState.totalTime)}`;
+            
+            showScreen('end');
+            createConfetti();
+            playSound('complete');
+        }
+
+        function startGame() {
+            gameState = {
+                currentLevel: 1,
+                targetsFound: 0,
+                targetsNeeded: 1,
+                startTime: 0,
+                totalTime: 0,
+                timerInterval: null,
+                stars: [],
+                currentEmojiSet: null,
+                isPlaying: false
+            };
+            
+            showScreen('game');
+            setTimeout(generateLevel, 300);
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function goToStart() {
+            showScreen('start');
+        }
+
+        // Prevenir zoom en móviles
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+
+        // Touch feedback global
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.classList.contains('btn')) {
+                const touch = e.touches[0];
+                createTouchEffect(touch.clientX, touch.clientY);
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>

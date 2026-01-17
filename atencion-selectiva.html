@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Atención Selectiva - Capitulín</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#9B59B6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --primary: #9B59B6;
+            --primary-dark: #8E44AD;
+            --secondary: #3498DB;
+            --accent: #E74C3C;
+            --success: #2ECC71;
+            --warning: #F39C12;
+            --bg-gradient-1: #a569bd;
+            --bg-gradient-2: #8e44ad;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity 0.5s, transform 0.5s;
+            overflow-y: auto;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        .title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.8rem, 6vw, 3.5rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark), 
+                         6px 6px 0 rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mascot {
+            font-size: clamp(50px, 12vw, 80px);
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.3));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .btn {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            padding: 12px 35px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(180deg, var(--success) 0%, #27ae60 100%);
+            color: white;
+            box-shadow: 0 5px 0 #1e8449, var(--shadow);
+        }
+
+        .btn-primary:hover, .btn-primary:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1e8449;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            color: var(--text-dark);
+            box-shadow: 0 5px 0 #ccc, var(--shadow);
+        }
+
+        /* Mode selection grid */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 4px solid transparent;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .mode-card.selected {
+            border-color: var(--success);
+            transform: scale(1.02);
+        }
+
+        .mode-icon {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            margin-bottom: 10px;
+        }
+
+        .mode-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .mode-description {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: #666;
+            line-height: 1.4;
+        }
+
+        /* Game header */
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .level-indicator {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+            color: var(--primary-dark);
+        }
+
+        .score-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+            color: var(--warning);
+        }
+
+        .lives-display {
+            display: flex;
+            gap: 3px;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+        }
+
+        .life.lost { opacity: 0.3; }
+
+        /* Game area */
+        .game-area {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* Bottom bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            background: var(--card-bg);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .level-progress {
+            display: flex;
+            gap: 5px;
+        }
+
+        .level-dot {
+            width: clamp(8px, 2vw, 14px);
+            height: clamp(8px, 2vw, 14px);
+            border-radius: 50%;
+            background: #e0e0e0;
+        }
+
+        .level-dot.completed { background: var(--success); }
+        .level-dot.current { background: var(--warning); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* ==================== */
+        /* MODO 1: CLASIFICADOR */
+        /* ==================== */
+        .classifier-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-zones {
+            display: flex;
+            justify-content: center;
+            gap: clamp(15px, 4vw, 40px);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .drop-zone {
+            width: clamp(100px, 25vw, 150px);
+            height: clamp(100px, 25vw, 150px);
+            background: rgba(255,255,255,0.9);
+            border: 4px dashed #ccc;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.hover {
+            border-color: var(--secondary);
+            background: rgba(52, 152, 219, 0.2);
+            transform: scale(1.05);
+        }
+
+        .drop-zone.correct {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.3);
+        }
+
+        .drop-zone.wrong {
+            border-color: var(--accent);
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        .drop-zone-icon {
+            font-size: clamp(2rem, 6vw, 3rem);
+        }
+
+        .drop-zone-label {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: var(--text-dark);
+            margin-top: 5px;
+        }
+
+        .draggable-item {
+            font-size: clamp(3rem, 12vw, 5rem);
+            cursor: grab;
+            transition: transform 0.2s;
+            filter: drop-shadow(3px 3px 5px rgba(0,0,0,0.3));
+            touch-action: none;
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        .draggable-item.dragging {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .items-queue {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+
+        .queue-indicator {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-top: 15px;
+        }
+
+        /* ==================== */
+        /* MODO 2: MEMORY */
+        /* ==================== */
+        .memory-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .memory-grid {
+            display: grid;
+            gap: clamp(8px, 2vw, 15px);
+            justify-content: center;
+        }
+
+        .memory-card {
+            width: clamp(60px, 18vw, 90px);
+            height: clamp(60px, 18vw, 90px);
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .memory-card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+
+        .memory-card.flipped .memory-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card-front, .memory-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+        }
+
+        .memory-card-front {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+        }
+
+        .memory-card-back {
+            background: white;
+            transform: rotateY(180deg);
+            font-size: clamp(2rem, 7vw, 3rem);
+        }
+
+        .memory-card.matched {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .memory-card.matched .memory-card-inner {
+            transform: rotateY(180deg) scale(0.9);
+        }
+
+        .memory-info {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* ==================== */
+        /* MODO 3: CAZADOR FORMAS */
+        /* ==================== */
+        .hunter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hunter-rule {
+            background: var(--card-bg);
+            padding: 12px 25px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .hunter-rule-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: var(--text-dark);
+        }
+
+        .hunter-rule-target {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+        }
+
+        .hunter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+
+        .hunter-item {
+            width: clamp(50px, 12vw, 70px);
+            height: clamp(50px, 12vw, 70px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            background: white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .hunter-item:active {
+            transform: scale(0.9);
+        }
+
+        .hunter-item.correct {
+            background: var(--success);
+            animation: popCorrect 0.4s;
+        }
+
+        .hunter-item.wrong {
+            background: var(--accent);
+            animation: shake 0.4s;
+        }
+
+        .hunter-item.found {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        @keyframes popCorrect {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .hunter-progress {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-top: 15px;
+            font-size: clamp(1rem, 3vw, 1.3rem);
+        }
+
+        /* ==================== */
+        /* MODO 4: CUENTA SELECTIVA */
+        /* ==================== */
+        .counter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .counter-question {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .counter-question-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--text-dark);
+        }
+
+        .counter-question-emoji {
+            font-size: clamp(2rem, 6vw, 3rem);
+        }
+
+        .counter-field {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .counter-emoji {
+            font-size: clamp(1.5rem, 5vw, 2.2rem);
+            text-align: center;
+            padding: 5px;
+        }
+
+        .counter-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .counter-option {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            width: clamp(60px, 15vw, 80px);
+            height: clamp(60px, 15vw, 80px);
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            color: var(--primary);
+        }
+
+        .counter-option:active {
+            transform: scale(0.95);
+        }
+
+        .counter-option.correct {
+            background: var(--success);
+            color: white;
+        }
+
+        .counter-option.wrong {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* ==================== */
+        /* MODALS */
+        /* ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            max-width: 90%;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-emoji {
+            font-size: clamp(3.5rem, 12vw, 6rem);
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(1.4rem, 5vw, 2.2rem);
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .modal-stats {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .star {
+            font-size: clamp(1.8rem, 6vw, 3rem);
+            opacity: 0.3;
+        }
+
+        .star.earned {
+            opacity: 1;
+            animation: starPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes starPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Timer bar */
+        .timer-bar {
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.1s linear;
+            width: 100%;
+        }
+
+        .timer-bar-fill.warning {
+            background: var(--accent);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confettiFall {
+            to { top: 110vh; transform: rotate(720deg); }
+        }
+
+        /* Countdown */
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .countdown-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .countdown-number {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(5rem, 20vw, 10rem);
+            color: white;
+            text-shadow: 4px 4px 0 var(--primary-dark);
+            animation: countPop 0.5s;
+        }
+
+        @keyframes countPop {
+            0% { transform: scale(2); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            .game-area {
+                top: 55px;
+                bottom: 65px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de inicio -->
+    <div id="startScreen" class="screen">
+        <h1 class="title">Atención Selectiva</h1>
+        <p class="subtitle">¡Enfócate en lo importante!</p>
+        <div class="mascot">🎯</div>
+        
+        <div class="mode-grid">
+            <div class="mode-card" onclick="selectMode('classifier')">
+                <div class="mode-icon">📦</div>
+                <h3 class="mode-title">Clasificador Veloz</h3>
+                <p class="mode-description">Arrastra cada objeto a su categoría correcta</p>
+            </div>
+            
+            <div class="mode-card" onclick="selectMode('memory')">
+                <div class="mode-icon">🃏</div>
+                <h3 class="mode-title">Memory Capitulín</h3>
+                <p class="mode-description">Encuentra las parejas de cartas iguales</p>
+            </div>
+            
+            <div class="mode-card" onclick="selectMode('hunter')">
+                <div class="mode-icon">🔍</div>
+                <h3 class="mode-title">Cazador de Formas</h3>
+                <p class="mode-description">Toca solo los elementos que cumplan la regla</p>
+            </div>
+            
+            <div class="mode-card" onclick="selectMode('counter')">
+                <div class="mode-icon">🔢</div>
+                <h3 class="mode-title">Cuenta Selectiva</h3>
+                <p class="mode-description">Cuenta solo un tipo de emoji entre muchos</p>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="display: none;">¡COMENZAR!</button>
+    </div>
+
+    <!-- Pantalla Clasificador -->
+    <div id="classifierScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="classLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="classScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="classLife1">❤️</span>
+                <span class="life" id="classLife2">❤️</span>
+                <span class="life" id="classLife3">❤️</span>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="classifier-container">
+                <div class="drop-zones" id="dropZones"></div>
+                <div class="items-queue" id="itemsQueue"></div>
+                <p class="queue-indicator">Quedan: <span id="itemsRemaining">0</span></p>
+            </div>
+        </div>
+        <div class="timer-bar"><div class="timer-bar-fill" id="classTimer"></div></div>
+        <div class="bottom-bar">
+            <div class="level-progress" id="classProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla Memory -->
+    <div id="memoryScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="memLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="memScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="memLife1">❤️</span>
+                <span class="life" id="memLife2">❤️</span>
+                <span class="life" id="memLife3">❤️</span>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="memory-container">
+                <p class="memory-info">Movimientos: <span id="memMoves">0</span> | Parejas: <span id="memPairs">0</span>/<span id="memTotalPairs">0</span></p>
+                <div class="memory-grid" id="memoryGrid"></div>
+            </div>
+        </div>
+        <div class="bottom-bar">
+            <div class="level-progress" id="memProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla Cazador -->
+    <div id="hunterScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="huntLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="huntScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="huntLife1">❤️</span>
+                <span class="life" id="huntLife2">❤️</span>
+                <span class="life" id="huntLife3">❤️</span>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="hunter-container">
+                <div class="hunter-rule">
+                    <span class="hunter-rule-text">¡Toca solo:</span>
+                    <span class="hunter-rule-target" id="hunterTarget">⭐</span>
+                </div>
+                <div class="hunter-grid" id="hunterGrid"></div>
+                <p class="hunter-progress">Encontrados: <span id="hunterFound">0</span>/<span id="hunterTotal">0</span></p>
+            </div>
+        </div>
+        <div class="timer-bar"><div class="timer-bar-fill" id="huntTimer"></div></div>
+        <div class="bottom-bar">
+            <div class="level-progress" id="huntProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla Contador -->
+    <div id="counterScreen" class="screen hidden">
+        <div class="game-header">
+            <div class="level-indicator">Nivel <span id="countLevel">1</span>/10</div>
+            <div class="score-display">⭐ <span id="countScore">0</span></div>
+            <div class="lives-display">
+                <span class="life" id="countLife1">❤️</span>
+                <span class="life" id="countLife2">❤️</span>
+                <span class="life" id="countLife3">❤️</span>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="counter-container">
+                <div class="counter-question">
+                    <span class="counter-question-text">¿Cuántos hay?</span>
+                    <span class="counter-question-emoji" id="counterTarget">⭐</span>
+                </div>
+                <div class="counter-field" id="counterField"></div>
+                <div class="counter-options" id="counterOptions"></div>
+            </div>
+        </div>
+        <div class="timer-bar"><div class="timer-bar-fill" id="countTimer"></div></div>
+        <div class="bottom-bar">
+            <div class="level-progress" id="countProgress"></div>
+        </div>
+    </div>
+
+    <!-- Pantalla final -->
+    <div id="endScreen" class="screen hidden">
+        <h1 class="title">¡GENIAL!</h1>
+        <div class="mascot">🏆</div>
+        <p class="subtitle" id="endMessage">¡Has completado el juego!</p>
+        <div class="score-display" style="font-size: 2.5rem; margin: 20px;">
+            ⭐ <span id="finalScore">0</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+            <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
+            <button class="btn btn-secondary" onclick="goToStart()">CAMBIAR MODO</button>
+        </div>
+    </div>
+
+    <!-- Modal nivel -->
+    <div id="levelModal" class="modal-overlay">
+        <div class="modal">
+            <div id="modalEmoji" class="modal-emoji">🎉</div>
+            <h2 id="modalTitle" class="modal-title">¡Nivel Completado!</h2>
+            <div class="stars-container">
+                <span class="star" id="star1">⭐</span>
+                <span class="star" id="star2">⭐</span>
+                <span class="star" id="star3">⭐</span>
+            </div>
+            <p id="modalStats" class="modal-stats"></p>
+            <button class="btn btn-primary" onclick="nextLevel()">SIGUIENTE</button>
+        </div>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="gameOverModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-emoji">😅</div>
+            <h2 class="modal-title">¡Inténtalo de nuevo!</h2>
+            <p class="modal-stats">Nivel alcanzado: <span id="gameOverLevel">1</span></p>
+            <p class="modal-stats">Puntuación: <span id="gameOverScore">0</span> ⭐</p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="restartGame()">REINTENTAR</button>
+                <button class="btn btn-secondary" onclick="goToStart()">MENÚ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdownOverlay" class="countdown-overlay">
+        <span id="countdownNumber" class="countdown-number">3</span>
+    </div>
+
+    <script>
+        // ===== CONFIGURACIÓN =====
+        const CONFIG = {
+            classifier: {
+                levels: [
+                    { items: 6, categories: 2, timeLimit: 30000 },
+                    { items: 8, categories: 2, timeLimit: 30000 },
+                    { items: 10, categories: 2, timeLimit: 28000 },
+                    { items: 10, categories: 3, timeLimit: 30000 },
+                    { items: 12, categories: 3, timeLimit: 28000 },
+                    { items: 14, categories: 3, timeLimit: 26000 },
+                    { items: 14, categories: 4, timeLimit: 30000 },
+                    { items: 16, categories: 4, timeLimit: 28000 },
+                    { items: 18, categories: 4, timeLimit: 26000 },
+                    { items: 20, categories: 4, timeLimit: 25000 }
+                ]
+            },
+            memory: {
+                levels: [
+                    { pairs: 4, cols: 4 },
+                    { pairs: 6, cols: 4 },
+                    { pairs: 6, cols: 4 },
+                    { pairs: 8, cols: 4 },
+                    { pairs: 8, cols: 4 },
+                    { pairs: 10, cols: 5 },
+                    { pairs: 10, cols: 5 },
+                    { pairs: 12, cols: 6 },
+                    { pairs: 12, cols: 6 },
+                    { pairs: 15, cols: 6 }
+                ]
+            },
+            hunter: {
+                levels: [
+                    { total: 16, targets: 4, types: 3, timeLimit: 20000 },
+                    { total: 20, targets: 5, types: 4, timeLimit: 20000 },
+                    { total: 24, targets: 5, types: 4, timeLimit: 18000 },
+                    { total: 25, targets: 6, types: 5, timeLimit: 18000 },
+                    { total: 30, targets: 6, types: 5, timeLimit: 16000 },
+                    { total: 30, targets: 7, types: 6, timeLimit: 16000 },
+                    { total: 36, targets: 7, types: 6, timeLimit: 15000 },
+                    { total: 36, targets: 8, types: 7, timeLimit: 14000 },
+                    { total: 42, targets: 8, types: 7, timeLimit: 14000 },
+                    { total: 49, targets: 10, types: 8, timeLimit: 15000 }
+                ]
+            },
+            counter: {
+                levels: [
+                    { total: 12, targetCount: [3, 4], types: 3, timeLimit: 15000 },
+                    { total: 16, targetCount: [4, 5], types: 4, timeLimit: 15000 },
+                    { total: 20, targetCount: [4, 6], types: 4, timeLimit: 14000 },
+                    { total: 20, targetCount: [5, 7], types: 5, timeLimit: 14000 },
+                    { total: 25, targetCount: [5, 8], types: 5, timeLimit: 13000 },
+                    { total: 30, targetCount: [6, 9], types: 6, timeLimit: 13000 },
+                    { total: 30, targetCount: [6, 10], types: 6, timeLimit: 12000 },
+                    { total: 36, targetCount: [7, 11], types: 7, timeLimit: 12000 },
+                    { total: 36, targetCount: [8, 12], types: 7, timeLimit: 11000 },
+                    { total: 42, targetCount: [8, 14], types: 8, timeLimit: 12000 }
+                ]
+            }
+        };
+
+        // Categorías para clasificador
+        const CATEGORIES = [
+            { name: 'Frutas', icon: '🍎', items: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑', '🍒', '🥭', '🍌', '🍉'] },
+            { name: 'Animales', icon: '🐶', items: ['🐶', '🐱', '🐭', '🐰', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯'] },
+            { name: 'Vehículos', icon: '🚗', items: ['🚗', '🚕', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '✈️', '🚀'] },
+            { name: 'Comida', icon: '🍕', items: ['🍕', '🍔', '🌭', '🍟', '🌮', '🍿', '🧁', '🍩', '🍪', '🎂'] },
+            { name: 'Deportes', icon: '⚽', items: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓', '🥏', '🏸'] },
+            { name: 'Naturaleza', icon: '🌸', items: ['🌸', '🌺', '🌻', '🌹', '🌷', '🍀', '🌿', '🌴', '🌵', '🍄'] }
+        ];
+
+        // Emojis para memory
+        const MEMORY_EMOJIS = ['🦁', '🐯', '🐻', '🐼', '🐨', '🦊', '🐰', '🐸', '🦋', '🐝', '🌟', '🌈', '🎈', '🎁', '🍎'];
+
+        // Emojis para hunter/counter
+        const HUNTER_EMOJIS = ['⭐', '❤️', '🔵', '🟢', '🟡', '🟣', '🔶', '💎', '🌙', '☀️'];
+
+        // ===== ESTADO =====
+        let gameState = {
+            mode: null,
+            level: 1,
+            score: 0,
+            lives: 3,
+            errors: 0,
+            isPlaying: false,
+            timerInterval: null,
+            levelTimer: null,
+            
+            // Classifier
+            classItems: [],
+            classCategories: [],
+            currentDrag: null,
+            
+            // Memory
+            memCards: [],
+            memFlipped: [],
+            memMatched: 0,
+            memMoves: 0,
+            memLocked: false,
+            
+            // Hunter
+            huntTargets: 0,
+            huntFound: 0,
+            
+            // Counter
+            countCorrect: 0
+        };
+
+        // ===== UTILIDADES =====
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const freqs = { correct: 880, wrong: 200, complete: 1047 };
+                osc.frequency.value = freqs[type] || 440;
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        function createConfetti() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 4000);
+                }, i * 20);
+            }
+        }
+
+        function showCountdown(cb) {
+            const overlay = document.getElementById('countdownOverlay');
+            const num = document.getElementById('countdownNumber');
+            let count = 3;
+            overlay.classList.add('active');
+            num.textContent = count;
+            
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    num.textContent = count;
+                    num.style.animation = 'none';
+                    num.offsetHeight;
+                    num.style.animation = 'countPop 0.5s';
+                } else {
+                    num.textContent = '¡YA!';
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        cb();
+                    }, 400);
+                    clearInterval(interval);
+                }
+            }, 700);
+        }
+
+        // ===== NAVEGACIÓN =====
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function selectMode(mode) {
+            gameState.mode = mode;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('startBtn').style.display = 'block';
+        }
+
+        function goToStart() {
+            clearTimers();
+            hideModals();
+            gameState.mode = null;
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('startBtn').style.display = 'none';
+            showScreen('startScreen');
+        }
+
+        function hideModals() {
+            document.getElementById('levelModal').classList.remove('active');
+            document.getElementById('gameOverModal').classList.remove('active');
+        }
+
+        function clearTimers() {
+            clearInterval(gameState.timerInterval);
+            clearTimeout(gameState.levelTimer);
+        }
+
+        // ===== INICIO =====
+        function startGame() {
+            if (!gameState.mode) return;
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.errors = 0;
+            hideModals();
+            clearTimers();
+            
+            const screens = {
+                classifier: 'classifierScreen',
+                memory: 'memoryScreen',
+                hunter: 'hunterScreen',
+                counter: 'counterScreen'
+            };
+            showScreen(screens[gameState.mode]);
+            showCountdown(() => initLevel());
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function initLevel() {
+            gameState.errors = 0;
+            gameState.isPlaying = true;
+            
+            switch(gameState.mode) {
+                case 'classifier': initClassifier(); break;
+                case 'memory': initMemory(); break;
+                case 'hunter': initHunter(); break;
+                case 'counter': initCounter(); break;
+            }
+        }
+
+        // ===== CLASSIFIER =====
+        function initClassifier() {
+            const cfg = CONFIG.classifier.levels[gameState.level - 1];
+            updateClassifierUI();
+            
+            // Seleccionar categorías aleatorias
+            gameState.classCategories = shuffle(CATEGORIES).slice(0, cfg.categories);
+            
+            // Generar items
+            gameState.classItems = [];
+            const itemsPerCat = Math.ceil(cfg.items / cfg.categories);
+            gameState.classCategories.forEach((cat, catIdx) => {
+                const catItems = shuffle(cat.items).slice(0, itemsPerCat);
+                catItems.forEach(item => {
+                    gameState.classItems.push({ emoji: item, category: catIdx });
+                });
+            });
+            gameState.classItems = shuffle(gameState.classItems).slice(0, cfg.items);
+            
+            // Render drop zones
+            const zonesEl = document.getElementById('dropZones');
+            zonesEl.innerHTML = '';
+            gameState.classCategories.forEach((cat, idx) => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone';
+                zone.dataset.category = idx;
+                zone.innerHTML = `<span class="drop-zone-icon">${cat.icon}</span><span class="drop-zone-label">${cat.name}</span>`;
+                
+                zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('hover'); });
+                zone.addEventListener('dragleave', () => zone.classList.remove('hover'));
+                zone.addEventListener('drop', e => handleDrop(e, idx));
+                
+                // Touch
+                zone.addEventListener('touchmove', e => e.preventDefault());
+                zonesEl.appendChild(zone);
+            });
+            
+            showNextClassItem();
+            startTimer('classTimer', cfg.timeLimit, () => completeLevel());
+        }
+
+        function showNextClassItem() {
+            const queue = document.getElementById('itemsQueue');
+            document.getElementById('itemsRemaining').textContent = gameState.classItems.length;
+            
+            if (gameState.classItems.length === 0) {
+                completeLevel();
+                return;
+            }
+            
+            queue.innerHTML = '';
+            const item = gameState.classItems[0];
+            const el = document.createElement('div');
+            el.className = 'draggable-item';
+            el.textContent = item.emoji;
+            el.draggable = true;
+            el.dataset.category = item.category;
+            
+            el.addEventListener('dragstart', e => {
+                gameState.currentDrag = item;
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            // Touch drag
+            let touchOffset = { x: 0, y: 0 };
+            el.addEventListener('touchstart', e => {
+                gameState.currentDrag = item;
+                const touch = e.touches[0];
+                const rect = el.getBoundingClientRect();
+                touchOffset.x = touch.clientX - rect.left;
+                touchOffset.y = touch.clientY - rect.top;
+                el.classList.add('dragging');
+            });
+            
+            el.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                el.style.left = (touch.clientX - touchOffset.x) + 'px';
+                el.style.top = (touch.clientY - touchOffset.y) + 'px';
+                
+                // Check hover
+                document.querySelectorAll('.drop-zone').forEach(z => {
+                    const rect = z.getBoundingClientRect();
+                    if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                        touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                        z.classList.add('hover');
+                    } else {
+                        z.classList.remove('hover');
+                    }
+                });
+            });
+            
+            el.addEventListener('touchend', e => {
+                el.classList.remove('dragging');
+                el.style.left = '';
+                el.style.top = '';
+                
+                const touch = e.changedTouches[0];
+                document.querySelectorAll('.drop-zone').forEach(z => {
+                    z.classList.remove('hover');
+                    const rect = z.getBoundingClientRect();
+                    if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                        touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                        handleDrop(null, parseInt(z.dataset.category));
+                    }
+                });
+            });
+            
+            queue.appendChild(el);
+        }
+
+        function handleDrop(e, zoneCategory) {
+            if (e) e.preventDefault();
+            if (!gameState.currentDrag || !gameState.isPlaying) return;
+            
+            const zone = document.querySelector(`.drop-zone[data-category="${zoneCategory}"]`);
+            zone.classList.remove('hover');
+            
+            if (gameState.currentDrag.category === zoneCategory) {
+                zone.classList.add('correct');
+                setTimeout(() => zone.classList.remove('correct'), 300);
+                playSound('correct');
+                gameState.score += 10;
+                gameState.classItems.shift();
+            } else {
+                zone.classList.add('wrong');
+                setTimeout(() => zone.classList.remove('wrong'), 300);
+                playSound('wrong');
+                gameState.errors++;
+                gameState.lives--;
+                if (gameState.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            gameState.currentDrag = null;
+            updateClassifierUI();
+            showNextClassItem();
+        }
+
+        function updateClassifierUI() {
+            document.getElementById('classLevel').textContent = gameState.level;
+            document.getElementById('classScore').textContent = gameState.score;
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('classLife' + i).classList.toggle('lost', i > gameState.lives);
+            }
+            updateProgress('classProgress');
+        }
+
+        // ===== MEMORY =====
+        function initMemory() {
+            const cfg = CONFIG.memory.levels[gameState.level - 1];
+            gameState.memMatched = 0;
+            gameState.memMoves = 0;
+            gameState.memFlipped = [];
+            gameState.memLocked = false;
+            
+            updateMemoryUI();
+            document.getElementById('memTotalPairs').textContent = cfg.pairs;
+            
+            // Generate cards
+            const emojis = shuffle(MEMORY_EMOJIS).slice(0, cfg.pairs);
+            gameState.memCards = shuffle([...emojis, ...emojis]);
+            
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
+            
+            gameState.memCards.forEach((emoji, idx) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.index = idx;
+                card.innerHTML = `
+                    <div class="memory-card-inner">
+                        <div class="memory-card-front">❓</div>
+                        <div class="memory-card-back">${emoji}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => flipCard(card, idx));
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard(card, idx) {
+            if (gameState.memLocked || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+            
+            card.classList.add('flipped');
+            gameState.memFlipped.push({ card, idx, emoji: gameState.memCards[idx] });
+            
+            if (gameState.memFlipped.length === 2) {
+                gameState.memMoves++;
+                gameState.memLocked = true;
+                
+                const [first, second] = gameState.memFlipped;
+                
+                if (first.emoji === second.emoji) {
+                    // Match!
+                    playSound('correct');
+                    first.card.classList.add('matched');
+                    second.card.classList.add('matched');
+                    gameState.memMatched++;
+                    gameState.score += 20;
+                    
+                    gameState.memFlipped = [];
+                    gameState.memLocked = false;
+                    
+                    updateMemoryUI();
+                    
+                    if (gameState.memMatched === CONFIG.memory.levels[gameState.level - 1].pairs) {
+                        setTimeout(() => completeLevel(), 500);
+                    }
+                } else {
+                    // No match
+                    playSound('wrong');
+                    gameState.errors++;
+                    
+                    setTimeout(() => {
+                        first.card.classList.remove('flipped');
+                        second.card.classList.remove('flipped');
+                        gameState.memFlipped = [];
+                        gameState.memLocked = false;
+                        updateMemoryUI();
+                    }, 800);
+                }
+            }
+        }
+
+        function updateMemoryUI() {
+            document.getElementById('memLevel').textContent = gameState.level;
+            document.getElementById('memScore').textContent = gameState.score;
+            document.getElementById('memMoves').textContent = gameState.memMoves;
+            document.getElementById('memPairs').textContent = gameState.memMatched;
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('memLife' + i).classList.toggle('lost', i > gameState.lives);
+            }
+            updateProgress('memProgress');
+        }
+
+        // ===== HUNTER =====
+        function initHunter() {
+            const cfg = CONFIG.hunter.levels[gameState.level - 1];
+            gameState.huntFound = 0;
+            gameState.huntTargets = cfg.targets;
+            
+            updateHunterUI();
+            
+            // Select target and distractors
+            const allEmojis = shuffle(HUNTER_EMOJIS);
+            const target = allEmojis[0];
+            const distractors = allEmojis.slice(1, cfg.types);
+            
+            document.getElementById('hunterTarget').textContent = target;
+            document.getElementById('hunterTotal').textContent = cfg.targets;
+            
+            // Generate grid
+            const items = [];
+            for (let i = 0; i < cfg.targets; i++) {
+                items.push({ emoji: target, isTarget: true });
+            }
+            for (let i = 0; i < cfg.total - cfg.targets; i++) {
+                items.push({ emoji: distractors[i % distractors.length], isTarget: false });
+            }
+            
+            const shuffled = shuffle(items);
+            const grid = document.getElementById('hunterGrid');
+            grid.innerHTML = '';
+            
+            shuffled.forEach((item, idx) => {
+                const el = document.createElement('div');
+                el.className = 'hunter-item';
+                el.textContent = item.emoji;
+                el.addEventListener('click', () => handleHunterClick(el, item.isTarget));
+                grid.appendChild(el);
+            });
+            
+            startTimer('huntTimer', cfg.timeLimit, () => {
+                if (gameState.huntFound < gameState.huntTargets) {
+                    gameState.lives--;
+                    if (gameState.lives <= 0) gameOver();
+                    else completeLevel();
+                }
+            });
+        }
+
+        function handleHunterClick(el, isTarget) {
+            if (!gameState.isPlaying || el.classList.contains('found')) return;
+            
+            if (isTarget) {
+                el.classList.add('correct', 'found');
+                playSound('correct');
+                gameState.huntFound++;
+                gameState.score += 10;
+                document.getElementById('hunterFound').textContent = gameState.huntFound;
+                
+                if (gameState.huntFound >= gameState.huntTargets) {
+                    clearTimers();
+                    setTimeout(() => completeLevel(), 400);
+                }
+            } else {
+                el.classList.add('wrong');
+                setTimeout(() => el.classList.remove('wrong'), 400);
+                playSound('wrong');
+                gameState.errors++;
+                gameState.lives--;
+                updateHunterUI();
+                
+                if (gameState.lives <= 0) {
+                    clearTimers();
+                    gameOver();
+                }
+            }
+        }
+
+        function updateHunterUI() {
+            document.getElementById('huntLevel').textContent = gameState.level;
+            document.getElementById('huntScore').textContent = gameState.score;
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('huntLife' + i).classList.toggle('lost', i > gameState.lives);
+            }
+            updateProgress('huntProgress');
+        }
+
+        // ===== COUNTER =====
+        function initCounter() {
+            const cfg = CONFIG.counter.levels[gameState.level - 1];
+            updateCounterUI();
+            
+            // Select target and distractors
+            const allEmojis = shuffle(HUNTER_EMOJIS);
+            const target = allEmojis[0];
+            const distractors = allEmojis.slice(1, cfg.types);
+            
+            // Determine target count
+            const minCount = cfg.targetCount[0];
+            const maxCount = cfg.targetCount[1];
+            gameState.countCorrect = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+            
+            document.getElementById('counterTarget').textContent = target;
+            
+            // Generate field
+            const items = [];
+            for (let i = 0; i < gameState.countCorrect; i++) {
+                items.push(target);
+            }
+            for (let i = 0; i < cfg.total - gameState.countCorrect; i++) {
+                items.push(distractors[i % distractors.length]);
+            }
+            
+            const shuffled = shuffle(items);
+            const field = document.getElementById('counterField');
+            field.innerHTML = '';
+            
+            shuffled.forEach(emoji => {
+                const el = document.createElement('span');
+                el.className = 'counter-emoji';
+                el.textContent = emoji;
+                field.appendChild(el);
+            });
+            
+            // Generate options
+            const options = [gameState.countCorrect];
+            while (options.length < 4) {
+                const offset = Math.floor(Math.random() * 5) - 2;
+                const opt = gameState.countCorrect + offset;
+                if (opt > 0 && opt !== gameState.countCorrect && !options.includes(opt)) {
+                    options.push(opt);
+                }
+            }
+            
+            const shuffledOpts = shuffle(options);
+            const optsEl = document.getElementById('counterOptions');
+            optsEl.innerHTML = '';
+            
+            shuffledOpts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'counter-option';
+                btn.textContent = opt;
+                btn.addEventListener('click', () => handleCounterClick(btn, opt));
+                optsEl.appendChild(btn);
+            });
+            
+            startTimer('countTimer', cfg.timeLimit, () => {
+                gameState.lives--;
+                if (gameState.lives <= 0) gameOver();
+                else {
+                    if (gameState.level < 10) {
+                        gameState.level++;
+                        initLevel();
+                    } else {
+                        completeLevel();
+                    }
+                }
+            });
+        }
+
+        function handleCounterClick(btn, value) {
+            if (!gameState.isPlaying) return;
+            clearTimers();
+            
+            document.querySelectorAll('.counter-option').forEach(b => b.style.pointerEvents = 'none');
+            
+            if (value === gameState.countCorrect) {
+                btn.classList.add('correct');
+                playSound('correct');
+                gameState.score += 15;
+                setTimeout(() => completeLevel(), 600);
+            } else {
+                btn.classList.add('wrong');
+                // Show correct
+                document.querySelectorAll('.counter-option').forEach(b => {
+                    if (parseInt(b.textContent) === gameState.countCorrect) {
+                        b.classList.add('correct');
+                    }
+                });
+                playSound('wrong');
+                gameState.errors++;
+                gameState.lives--;
+                updateCounterUI();
+                
+                setTimeout(() => {
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    } else {
+                        completeLevel();
+                    }
+                }, 1000);
+            }
+        }
+
+        function updateCounterUI() {
+            document.getElementById('countLevel').textContent = gameState.level;
+            document.getElementById('countScore').textContent = gameState.score;
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('countLife' + i).classList.toggle('lost', i > gameState.lives);
+            }
+            updateProgress('countProgress');
+        }
+
+        // ===== TIMER =====
+        function startTimer(barId, duration, onEnd) {
+            const bar = document.getElementById(barId);
+            const start = Date.now();
+            bar.style.width = '100%';
+            bar.classList.remove('warning');
+            
+            gameState.timerInterval = setInterval(() => {
+                const elapsed = Date.now() - start;
+                const pct = Math.max(0, ((duration - elapsed) / duration) * 100);
+                bar.style.width = pct + '%';
+                if (pct < 25) bar.classList.add('warning');
+            }, 50);
+            
+            gameState.levelTimer = setTimeout(() => {
+                clearInterval(gameState.timerInterval);
+                onEnd();
+            }, duration);
+        }
+
+        // ===== PROGRESS =====
+        function updateProgress(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i < gameState.level) dot.classList.add('completed');
+                if (i === gameState.level) dot.classList.add('current');
+                container.appendChild(dot);
+            }
+        }
+
+        // ===== COMPLETE / GAME OVER =====
+        function completeLevel() {
+            gameState.isPlaying = false;
+            clearTimers();
+            
+            let stars = 3;
+            if (gameState.errors >= 2) stars = 2;
+            if (gameState.errors >= 4) stars = 1;
+            
+            gameState.score += stars * 10;
+            
+            document.getElementById('modalTitle').textContent = gameState.level === 10 ? '¡INCREÍBLE!' : '¡Nivel Completado!';
+            document.getElementById('modalEmoji').textContent = stars === 3 ? '🌟' : stars === 2 ? '😊' : '👍';
+            document.getElementById('modalStats').textContent = `${gameState.errors} errores`;
+            
+            ['star1', 'star2', 'star3'].forEach((id, i) => {
+                const star = document.getElementById(id);
+                star.classList.remove('earned');
+                if (i < stars) setTimeout(() => star.classList.add('earned'), (i + 1) * 300);
+            });
+            
+            document.getElementById('levelModal').classList.add('active');
+            
+            if (stars === 3) {
+                playSound('complete');
+                createConfetti();
+            }
+        }
+
+        function nextLevel() {
+            hideModals();
+            
+            if (gameState.level >= 10) {
+                showEndScreen();
+            } else {
+                gameState.level++;
+                gameState.lives = 3;
+                showCountdown(() => initLevel());
+            }
+        }
+
+        function gameOver() {
+            gameState.isPlaying = false;
+            clearTimers();
+            hideModals();
+            
+            document.getElementById('gameOverLevel').textContent = gameState.level;
+            document.getElementById('gameOverScore').textContent = gameState.score;
+            document.getElementById('gameOverModal').classList.add('active');
+        }
+
+        function showEndScreen() {
+            const modeNames = {
+                classifier: 'Clasificador Veloz',
+                memory: 'Memory Capitulín',
+                hunter: 'Cazador de Formas',
+                counter: 'Cuenta Selectiva'
+            };
+            document.getElementById('endMessage').textContent = `¡Completaste ${modeNames[gameState.mode]}!`;
+            document.getElementById('finalScore').textContent = gameState.score;
+            showScreen('endScreen');
+            createConfetti();
+            playSound('complete');
+        }
+
+        // Prevent zoom
+        document.addEventListener('gesturestart', e => e.preventDefault());
+    </script>
+</body>
+</html>
