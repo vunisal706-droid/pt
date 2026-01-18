@@ -180,6 +180,22 @@
             background: var(--card-bg);
             box-shadow: var(--shadow);
             z-index: 100;
+            gap: 10px;
+        }
+
+        .menu-btn {
+            font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+            text-decoration: none;
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            padding: 6px 10px;
+            border-radius: 10px;
+            box-shadow: 0 3px 0 #ccc;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #ccc;
         }
 
         .level-indicator {
@@ -794,12 +810,13 @@
         </div>
         
         <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="display: none;">¡COMENZAR!</button>
-        <a href="juegos-capitulin.html" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
+        <a href="https://vunisal706-droid.github.io/pt/" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
     </div>
 
     <!-- Pantalla Clasificador -->
     <div id="classifierScreen" class="screen hidden">
         <div class="game-header">
+            <a href="https://vunisal706-droid.github.io/pt/" class="menu-btn" title="Volver al menú">🏠</a>
             <div class="level-indicator">Nivel <span id="classLevel">1</span>/10</div>
             <div class="score-display">⭐ <span id="classScore">0</span></div>
             <div class="lives-display">
@@ -824,6 +841,7 @@
     <!-- Pantalla Memory -->
     <div id="memoryScreen" class="screen hidden">
         <div class="game-header">
+            <a href="https://vunisal706-droid.github.io/pt/" class="menu-btn" title="Volver al menú">🏠</a>
             <div class="level-indicator">Nivel <span id="memLevel">1</span>/10</div>
             <div class="score-display">⭐ <span id="memScore">0</span></div>
             <div class="lives-display">
@@ -846,6 +864,7 @@
     <!-- Pantalla Cazador -->
     <div id="hunterScreen" class="screen hidden">
         <div class="game-header">
+            <a href="https://vunisal706-droid.github.io/pt/" class="menu-btn" title="Volver al menú">🏠</a>
             <div class="level-indicator">Nivel <span id="huntLevel">1</span>/10</div>
             <div class="score-display">⭐ <span id="huntScore">0</span></div>
             <div class="lives-display">
@@ -873,6 +892,7 @@
     <!-- Pantalla Contador -->
     <div id="counterScreen" class="screen hidden">
         <div class="game-header">
+            <a href="https://vunisal706-droid.github.io/pt/" class="menu-btn" title="Volver al menú">🏠</a>
             <div class="level-indicator">Nivel <span id="countLevel">1</span>/10</div>
             <div class="score-display">⭐ <span id="countScore">0</span></div>
             <div class="lives-display">
@@ -907,7 +927,7 @@
         </div>
         <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
             <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
-            <a href="juegos-capitulin.html" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
+            <a href="https://vunisal706-droid.github.io/pt/" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
         </div>
     </div>
 
@@ -935,7 +955,7 @@
             <p class="modal-stats">Puntuación: <span id="gameOverScore">0</span> ⭐</p>
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px;">
                 <button class="btn btn-primary" onclick="restartGame()">REINTENTAR</button>
-                <a href="juegos-capitulin.html" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
+                <a href="https://vunisal706-droid.github.io/pt/" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
             </div>
         </div>
     </div>

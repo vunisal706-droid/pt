@@ -146,6 +146,22 @@
             background: var(--card-bg);
             box-shadow: var(--shadow);
             z-index: 100;
+            gap: 10px;
+        }
+
+        .menu-btn {
+            font-size: clamp(1.3rem, 4vw, 1.8rem);
+            text-decoration: none;
+            background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 3px 0 #ccc;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #ccc;
         }
 
         .level-indicator {
@@ -507,12 +523,13 @@
         </div>
         
         <button class="btn btn-primary" onclick="startGame()">¡JUGAR!</button>
-        <a href="juegos-capitulin.html" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
+        <a href="https://vunisal706-droid.github.io/pt/" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
     </div>
 
     <!-- Pantalla de juego -->
     <div id="gameScreen" class="screen hidden">
         <div class="game-header">
+            <a href="https://vunisal706-droid.github.io/pt/" class="menu-btn" title="Volver al menú">🏠</a>
             <div class="level-indicator">Nivel <span id="currentLevel">1</span>/10</div>
             <div class="target-display">
                 <span class="target-label">Busca:</span>
@@ -565,7 +582,7 @@
         <p class="final-message" id="finalTime">Tiempo total: 0:00</p>
         <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px;">
             <button class="btn btn-primary" onclick="restartGame()">JUGAR DE NUEVO</button>
-            <a href="juegos-capitulin.html" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
+            <a href="https://vunisal706-droid.github.io/pt/" class="btn btn-secondary" style="text-decoration: none;">🏠 MENÚ</a>
         </div>
     </div>
 
